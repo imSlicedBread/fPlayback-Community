@@ -44,7 +44,8 @@
         : 'Advertisement — queue position held', displayReady: false, revealDisplay: !suppress };
     }
     document.title = 'fPlayback:' + command.nonce + ':' + JSON.stringify({
-      generation: command.generation, videoId: command.videoId, href: location.href, sample: performance.now(), ...value, advertisement
+      generation: command.generation, videoId: command.videoId, href: location.href, sample: performance.now(),
+      qualityRequested:state.qualityRequested, videoWidth:video?.videoWidth, videoHeight:video?.videoHeight, ...value, advertisement
     });
   };
   const player = document.querySelector('#movie_player');
@@ -182,6 +183,30 @@
     if (command.paused || command.voting || state.autoplayBlocked) resetWatchdog();
     else if (now-state.progressAt >= 30000) { recover('startup'); return; }
     report({ status: 'Waiting for YouTube. Sign in or check video access in the output window.' }); return;
+  }
+  // This is the normal watch-page player, not the IFrame API (whose quality
+  // setters are no-ops). Feature-detect its controls; YouTube can change them.
+  // Prefer standard 1080p without assuming the order of the advertised levels.
+  if (command.interacting !== true && now >= (state.qualityCheckAt ?? 0)) {
+    state.qualityCheckAt = now + 5000;
+    try {
+      const levels = player?.getAvailableQualityLevels?.();
+      const order = ['highres','hd2880','hd2160','hd1440','hd1080','hd720','large','medium','small','tiny'];
+      const available = Array.isArray(levels) ? order.filter(level => levels.includes(level)) : [];
+      const target = order.slice(4).find(level => available.includes(level)) || available[0];
+      if (target) {
+        const actual = player.getPlaybackQuality?.();
+        if (target !== state.qualityRequested || actual !== target) {
+          // Bound reassertion if adaptive playback drops quality. Never reload,
+          // seek, or pause the video to change its stream representation.
+          let requested = false;
+          try { if (typeof player.setPlaybackQualityRange === 'function') { player.setPlaybackQualityRange(target,target); requested = true; } } catch {}
+          try { if (typeof player.setPlaybackQuality === 'function') { player.setPlaybackQuality(target); requested = true; } } catch {}
+          if (requested) state.qualityRequested = target;
+        }
+        state.qualityCheckAt = now + 15000;
+      }
+    } catch {} // A missing/changing quality API must not break queue playback.
   }
   if (state.video !== video) {
     state.detach?.(); state.video = video;

@@ -75,11 +75,11 @@ New-Item -ItemType Directory -Force $sourcePath | Out-Null
 foreach ($name in @('src', 'vendor', 'CMakeLists.txt', 'build-windows.ps1', 'install-local.ps1', 'resources.qrc', 'watch-controller.js', 'README.md', 'LICENSE')) {
   Copy-Item -LiteralPath (Join-Path $root $name) -Destination $sourcePath -Recurse -Force
 }
-$installerName = "fKey-Playback-OBS-Plugin-Setup-0.1.11$variant.exe"
+$installerName = "fKey-Playback-OBS-Plugin-Setup-0.1.12$variant.exe"
 $installer = Join-Path $root $installerName
 Copy-Item -LiteralPath "$package/$installerName" -Destination $installer -Force
 ((Get-FileHash -LiteralPath $installer).Hash.ToLowerInvariant()+'  '+(Split-Path -Leaf $installer)) | Set-Content -LiteralPath ($installer+'.sha256') -Encoding ascii
-Compress-Archive -LiteralPath "$package/obs-plugins", "$package/source", "$package/README.md", "$package/LICENSE", $installer -DestinationPath "$root/fplayback-youtube-0.1.11$variant-windows-x64.zip" -Force
-((Get-FileHash -LiteralPath "$root/fplayback-youtube-0.1.11$variant-windows-x64.zip").Hash.ToLowerInvariant()+"  fplayback-youtube-0.1.11$variant-windows-x64.zip") | Set-Content -LiteralPath "$root/fplayback-youtube-0.1.11$variant-windows-x64.zip.sha256" -Encoding ascii
-Get-FileHash -LiteralPath "$root/fplayback-youtube-0.1.11$variant-windows-x64.zip" -Algorithm SHA256 | Format-List
+Compress-Archive -LiteralPath "$package/obs-plugins", "$package/source", "$package/README.md", "$package/LICENSE", $installer -DestinationPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip" -Force
+((Get-FileHash -LiteralPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip").Hash.ToLowerInvariant()+"  fplayback-youtube-0.1.12$variant-windows-x64.zip") | Set-Content -LiteralPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip.sha256" -Encoding ascii
+Get-FileHash -LiteralPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip" -Algorithm SHA256 | Format-List
 Write-Output "Built plugin: $package/obs-plugins/64bit/fplayback-youtube.dll"

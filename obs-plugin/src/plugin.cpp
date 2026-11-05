@@ -40,6 +40,8 @@
 #include "output-resolution.hpp"
 #include "ad-output-guard.hpp"
 #include "filtered-browser.hpp"
+#include "audio.hpp"
+#include "stream-restart.hpp"
 
 OBS_DECLARE_MODULE()
 void playback_register_capture();
@@ -183,9 +185,19 @@ class Playback final : public QObject {
   OutputWindow *output = nullptr;
   QWidget *dock = nullptr;
   QLabel *status = nullptr;
+  QLabel *stationStatus = nullptr;
+  QTimer stationTimer;
+  bool stationProbeBusy = false;
+  int stationConnection = 0;
   QSpinBox *port = nullptr;
   QSettings *preferences = nullptr;
   QCheckBox *autoStart = nullptr;
+  QCheckBox *streamRestartOption = nullptr;
+  QLabel *streamRestartStatus = nullptr;
+  QTimer streamRestartTimer;
+  StreamRestart streamRestart;
+  bool streamStopping=false;
+  QString restartService;
   QCheckBox *outputLock = nullptr;
   QPushButton *interactButton = nullptr;
   bool interacting = false;
@@ -231,6 +243,90 @@ class Playback final : public QObject {
   }
   void holdAdOutputForNavigation() { adOutputGuard.beginNavigation(); updateAdOutput(); }
   void setStatus(const QString &message) { status->setText(message); }
+  QString twitchService() {
+    auto *service=obs_frontend_get_streaming_service();
+    if(!service)return {};
+    auto *settings=obs_service_get_settings(service);
+    const auto name=QString::fromUtf8(obs_data_get_string(settings,"service"));
+    const auto server=QString::fromUtf8(obs_data_get_string(settings,"server"));
+    obs_data_release(settings);
+    const QUrl url(server);
+    const auto host=url.host().toLower();
+    const bool twitch=name.startsWith("Twitch",Qt::CaseInsensitive) || host=="twitch.tv" || host.endsWith(".twitch.tv") || host=="contribute.live-video.net" || host.endsWith(".contribute.live-video.net");
+    return twitch?name+"\n"+server:QString(); // Never read or log the stream key.
+  }
+  void checkStreamRestart() {
+    const auto now=watchdogClock.elapsed();
+    const bool active=obs_frontend_streaming_active()&&!streamStopping;
+    const auto service=twitchService();
+    if(!restartService.isEmpty() && restartService!=service){streamRestart.cancel();if(active)streamRestart.started(now);else streamRestart.hasStarted=false;}
+    restartService=service;
+    // Normally STARTED supplies this timestamp; cover enabling a plugin while
+    // a stream is already active without treating an old stream as brand new.
+    if(active && !streamRestart.hasStarted && streamRestart.phase==StreamRestartPhase::Idle){
+      int64_t age=0;auto *output=obs_frontend_get_streaming_output();obs_video_info info{};
+      if(output && obs_get_video_info(&info) && info.fps_num)
+        age=int64_t(std::max(0,obs_output_get_total_frames(output)))*1000*info.fps_den/info.fps_num;
+      if(output)obs_output_release(output);
+      streamRestart.started(now-age);
+    }
+    const bool enabled=streamRestartOption->isChecked();
+    const auto action=streamRestart.tick(now,enabled,!service.isEmpty(),active,running&&lease&&stationConnection==1);
+    if(action==StreamRestartAction::Stop){
+      blog(LOG_INFO,"[fplayback-stream] Scheduled Twitch stream restart at 47h55m; Playback queue continues.");
+      obs_frontend_streaming_stop();
+    }else if(action==StreamRestartAction::Start){
+      blog(LOG_INFO,"[fplayback-stream] Restarting Twitch stream after the two-minute offline gap.");
+      obs_frontend_streaming_start();
+    }
+    streamRestartStatus->setVisible(enabled);
+    if(!enabled)return;
+    if(service.isEmpty())streamRestartStatus->setText("Waiting for a Twitch main stream. Multistream plugin outputs are not controlled.");
+    else if(streamRestart.phase==StreamRestartPhase::Failed)streamRestartStatus->setText("Stream restart failed or timed out. Check OBS and restart manually. Toggle this option off to cancel/reset.");
+    else if(streamRestart.phase==StreamRestartPhase::Stopping)streamRestartStatus->setText("Stopping Twitch stream for its scheduled restart...");
+    else if(streamRestart.phase==StreamRestartPhase::Starting)streamRestartStatus->setText("Starting Twitch stream...");
+    else if(streamRestart.phase==StreamRestartPhase::Waiting){
+      const auto seconds=std::max<int64_t>(0,(StreamRestart::gap-(now-streamRestart.phaseAt)+999)/1000);
+      streamRestartStatus->setText(QString("Twitch restart in %1s. Uncheck to cancel. Playback keeps running.").arg(seconds));
+    }else if(!active)streamRestartStatus->setText("Enabled. Start your Twitch stream manually; restart is scheduled at 47h55m.");
+    else if(!running||!lease||stationConnection!=1)streamRestartStatus->setText("Stream restart is waiting for a working Playback station/output.");
+    else{
+      const auto seconds=std::max<int64_t>(0,(StreamRestart::interval-(now-streamRestart.startedAt))/1000);
+      streamRestartStatus->setText(QString("Twitch restart in %1h %2m. Offline gap: 2 minutes.").arg(seconds/3600).arg((seconds%3600)/60));
+    }
+  }
+  void stationAvailable(bool available) {
+    const int connection=available?1:-1;
+    if (connection!=stationConnection) {
+      stationConnection=connection;
+      stationStatus->setText(available ? "Playback station connected" :
+        "PLAYBACK STATION NOT RUNNING");
+      stationStatus->setMinimumHeight(40);
+      stationStatus->setToolTip("Open the Playback folder and run start-player.bat, then leave it running. OBS alone does not start the station. Check the station port if it is already open.");
+      stationStatus->setStyleSheet(available ? "QLabel { color:#b9ebcd; background:#183c2a; padding:10px; }" :
+        "QLabel { color:#ffffff; background:#8c2424; padding:10px; font-weight:bold; }");
+      if (!available) {
+        setStatus("Run start-player.bat in the Playback folder. OBS alone does not start Playback.");
+        blog(LOG_WARNING,"[fplayback-station] Station unavailable on port %d; start Playback before using the output.",activePort);
+        if (auto *panel=qobject_cast<QDockWidget *>(dock->parentWidget())) {panel->show();panel->raise();}
+      }
+    }
+    if (!available && running) {
+      lease=false; snapshot={}; loadedVideo.clear(); generation=-1;
+      pausePage(); playback_set_output_window(nullptr);
+      setStatus("Output paused. Run start-player.bat in the Playback folder. Reconnecting automatically...");
+    }
+  }
+  void checkStation() {
+    if (running || stationProbeBusy) return;
+    activePort=port->value(); const int checkedPort=activePort;
+    stationProbeBusy=true;
+    request("/api/health",nullptr,[this,checkedPort](int code,QJsonObject health) {
+      stationProbeBusy=false;
+      if (running || port->value()!=checkedPort) return;
+      stationAvailable(code==200 && health.value("ok").toBool() && health.value("app").toString()=="fKey Playback");
+    });
+  }
   void request(const QString &path, const QJsonObject *body,
                std::function<void(int, QJsonObject)> done) {
     QNetworkRequest req(QUrl(QString("http://127.0.0.1:%1%2").arg(activePort).arg(path)));
@@ -253,7 +349,7 @@ class Playback final : public QObject {
   void cancelRequests() {
     const auto pending=requests;requests.clear();
     for(auto *reply:pending) {disconnect(reply,nullptr,this,nullptr);reply->abort();reply->deleteLater();}
-    busy=false;
+    busy=false;stationProbeBusy=false;
   }
   void closeOutput() {
     rendererUnavailable=false;crashRetryPending=false;
@@ -357,6 +453,11 @@ class Playback final : public QObject {
     if (!running || busy || rebuildingBrowser) return;
     logResources();
     busy = true; const auto turn = epoch;
+    request("/api/health",nullptr,[this,turn](int healthCode,QJsonObject health) {
+      if (turn!=epoch || !running) return;
+      const bool available=healthCode==200 && health.value("ok").toBool() && health.value("app").toString()=="fKey Playback";
+      stationAvailable(available);
+      if (!available) {busy=false;return;}
     QJsonObject claim{{"workerId", worker}, {"displaySync", true}};
     request("/api/worker/claim", &claim, [this, turn](int code, QJsonObject) {
       if (turn != epoch || !running) { busy = false; return; }
@@ -364,14 +465,17 @@ class Playback final : public QObject {
       if (!lease) {
         busy = false;
         pausePage();
+        playback_set_output_window(nullptr);
         setStatus(code == 409 ? "Another output owns playback. Close its /player source, then retry." : "Playback unavailable. Start the station and check the port."); return;
       }
       request("/api/public?compact=1", nullptr, [this, turn](int statusCode, QJsonObject data) {
         busy = false;
         if (turn != epoch || !running) return;
-        if (statusCode != 200) { setStatus("Cannot read the Playback queue."); return; }
+        if (statusCode != 200) { lease=false;pausePage();playback_set_output_window(nullptr);setStatus("Cannot read the Playback queue. Output paused; retrying..."); return; }
+        playback_set_output_window(output?reinterpret_cast<HWND>(output->winId()):nullptr);
         snapshot = data; apply();
       });
+    });
     });
   }
 private slots:
@@ -403,7 +507,11 @@ private slots:
       holdAdOutputForNavigation();
       setStatus("Reloading YouTube at the saved queue position…"); browser->reloadPage(); return;
     }
-    setStatus(result.value("status").toString().left(240));
+    auto statusText=result.value("status").toString().left(240);
+    const int videoHeight=result.value("videoHeight").toInt();
+    if ((statusText=="Playing" || statusText=="Paused") && videoHeight>0)
+      statusText+=QString(" | Video: %1p").arg(videoHeight);
+    setStatus(statusText);
     QJsonObject body{{"workerId", worker}, {"generation", generation}};
     // The same validated readiness signal releases the video crossfade and title.
     if (result.value("displayReady").toBool() || result.value("revealDisplay").toBool()) {
@@ -426,6 +534,15 @@ private slots:
     }
   }
 public:
+  void streamEvent(enum obs_frontend_event event) {
+    const auto now=watchdogClock.elapsed();
+    if(event==OBS_FRONTEND_EVENT_STREAMING_STARTED){streamStopping=false;streamRestart.started(now);}
+    else if(event==OBS_FRONTEND_EVENT_STREAMING_STARTING){
+      if(streamRestart.phase!=StreamRestartPhase::Starting)streamRestart.cancel();
+    }else if(event==OBS_FRONTEND_EVENT_STREAMING_STOPPING){streamStopping=true;streamRestart.stopping();}
+    else if(event==OBS_FRONTEND_EVENT_STREAMING_STOPPED){streamStopping=false;streamRestart.stopped(now);}
+    else if(event==OBS_FRONTEND_EVENT_PROFILE_CHANGED){streamRestart.cancel();streamRestart.hasStarted=false;restartService.clear();}
+  }
   void start() {
     if(rendererUnavailable&&browser){stop();closeOutput();}
     if (!ensureBrowser()) {
@@ -455,10 +572,20 @@ public:
     preferences = new QSettings(QString::fromUtf8(configPath.Get()), QSettings::IniFormat, this);
     dock = new QWidget;
     auto *layout = new QVBoxLayout(dock);
+    stationStatus=new QLabel("Checking Playback station...");stationStatus->setWordWrap(true);
+    stationStatus->setStyleSheet("QLabel { color:#ffffff; background:#5b481c; padding:10px; }");
+    layout->addWidget(stationStatus);
     port = new QSpinBox; port->setRange(1, 65535); port->setValue(preferences->value("port",4177).toInt()); port->setPrefix("Station port: "); layout->addWidget(port);
     autoStart = new QCheckBox("Start this output when OBS opens");
     autoStart->setChecked(preferences->value("autoStart",false).toBool()); layout->addWidget(autoStart);
     connect(autoStart, &QCheckBox::toggled, this, [this](bool enabled) { preferences->setValue("autoStart", enabled); });
+    streamRestartOption=new QCheckBox("Restart Twitch stream before 48h");
+    streamRestartOption->setToolTip("Optional, off by default. Stops OBS's main Twitch stream at 47h55m, waits 2 minutes, then starts it again. Playback keeps running. Does not control multistream plugin outputs. Uncheck to cancel a pending restart.");
+    streamRestartOption->setChecked(preferences->value("restartTwitchStream",false).toBool());layout->addWidget(streamRestartOption);
+    streamRestartStatus=new QLabel;streamRestartStatus->setWordWrap(true);streamRestartStatus->setVisible(streamRestartOption->isChecked());layout->addWidget(streamRestartStatus);
+    connect(streamRestartOption,&QCheckBox::toggled,this,[this](bool enabled){preferences->setValue("restartTwitchStream",enabled);if(!enabled)streamRestart.cancel();checkStreamRestart();});
+    streamRestartTimer.setInterval(1000);
+    connect(&streamRestartTimer,&QTimer::timeout,this,[this](){checkStreamRestart();});
     outputLock=new QCheckBox("Lock output (size + controls)");
     outputLock->setChecked(true); layout->addWidget(outputLock);
     connect(outputLock,&QCheckBox::toggled,this,[this](bool) { applyOutputLock(); });
@@ -496,7 +623,7 @@ public:
     auto *applyResolutionButton=new QPushButton("Apply"); resolutionRow->addWidget(applyResolutionButton);
     layout->addLayout(resolutionRow);
     connect(applyResolutionButton,&QPushButton::clicked,this,[this]() {
-      if (applyResolution()) setStatus("Output resolution applied. YouTube stream quality remains automatic.");
+      if (applyResolution()) setStatus("Output resolution applied. YouTube prefers 1080p when available.");
     });
     const auto button = [this, layout](const QString &text, auto handler) {
       auto *b = new QPushButton(text); layout->addWidget(b); connect(b, &QPushButton::clicked, this, handler);
@@ -536,6 +663,8 @@ public:
     if (file.open(QIODevice::ReadOnly)) script = QString::fromUtf8(file.readAll());
     timer.setInterval(1000); connect(&timer, &QTimer::timeout, this, [this]() { poll(); });
     obs_frontend_add_dock_by_id("fplayback-youtube", "fKey Playback", dock);
+    stationTimer.setInterval(3000);
+    connect(&stationTimer,&QTimer::timeout,this,[this](){checkStation();});
   }
   void finishedLoading() {
     // OBS can restore a floating dock with its title bar outside the desktop.
@@ -562,6 +691,8 @@ public:
       if (position!=frame.topLeft()) panel->move(position);
     });
     applyResolution();
+    stationTimer.start();checkStation();
+    streamRestartTimer.start();checkStreamRestart();
     if (autoStart->isChecked()) {
       const auto turn=epoch;
       QTimer::singleShot(1500,this,[this,turn]() {if(epoch==turn)start();});
@@ -643,6 +774,7 @@ public:
     setStatus("Browser restarted at the saved queue position.");
   }
   void stop() {
+    streamRestart.cancel();
     crashRetryPending=false;
     setInteracting(false);
     playback_cancel_transition(); fadeTicket=0;
@@ -657,6 +789,8 @@ public:
     lease = false; setStatus("Stopped");
   }
   ~Playback() override {
+    streamRestartTimer.stop();streamRestart.cancel();
+    stationTimer.stop();
     timer.stop(); stop();
     closeOutput();cancelRequests();
     delete cef;
@@ -666,6 +800,7 @@ public:
 
 static Playback *playback = nullptr;
 static void frontendEvent(enum obs_frontend_event event, void *) {
+  if(playback)playback->streamEvent(event);
   if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING && playback)
     playback->finishedLoading();
   if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN || event == OBS_FRONTEND_EVENT_EXIT) { delete playback; playback = nullptr; }

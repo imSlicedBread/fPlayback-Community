@@ -1,4 +1,4 @@
-# fKey Playback OBS plugin — 0.1.11 — OBS 32 and OBS 33
+# fKey Playback OBS plugin — 0.1.12 — OBS 32 and OBS 33
 
 This native plugin opens a **normal YouTube watch page**, using OBS Browser's
 default browser context. It does not use an iframe or a Chrome extension. Sign
@@ -14,12 +14,12 @@ Browser Source embedded-player workflow has not been verified for members-only p
 
 ## OBS 32 and OBS 33 builds
 
-Playback v1.7.13 provides separate Windows x64 builds. Use the installer matching your installed OBS version; each build retains an exact CEF version/API-hash guard.
+Playback v1.7.14 provides separate Windows x64 builds. Use the installer matching your installed OBS version; each build retains an exact CEF version/API-hash guard.
 
 | OBS | Chromium / CEF | Installer |
 | --- | --- | --- |
-| 32.2.2 / Qt 6.11.1 | Chromium 127.0.6533.120 / CEF 127.145.7 | `fKey-Playback-OBS-Plugin-Setup-0.1.11.exe` |
-| 33.0.0 / Qt 6.11.1 | Chromium 150.0.7871.252 / CEF 150.0.20 | `fKey-Playback-OBS-Plugin-Setup-0.1.11-OBS33.exe` |
+| 32.2.2 / Qt 6.11.1 | Chromium 127.0.6533.120 / CEF 127.145.7 | `fKey-Playback-OBS-Plugin-Setup-0.1.12.exe` |
+| 33.0.0 / Qt 6.11.1 | Chromium 150.0.7871.252 / CEF 150.0.20 | `fKey-Playback-OBS-Plugin-Setup-0.1.12-OBS33.exe` |
 
 OBS 33 uses `core/obs-browser` for its built-in browser. This plugin still installs in the legacy third-party plugin folder supported by OBS 33. Neither installer replaces OBS, Chromium, or account data. The filtered child browser uses that OBS instance's existing global request context; no cookie copying, separate login store, extension or remote debugging port is introduced. OBS's own profile migration remains responsible for carrying a login across an OBS upgrade.
 
@@ -58,7 +58,7 @@ uses OBS's Windows Graphics Capture library directly: ordinary Window Capture
 excludes windows owned by OBS itself.
 
 1. Close OBS. Back up your OBS scene collection/profile.
-2. Double-click **fKey-Playback-OBS-Plugin-Setup-0.1.11.exe**, approve the Windows
+2. Double-click **fKey-Playback-OBS-Plugin-Setup-0.1.12.exe**, approve the Windows
    administrator prompt, and click **Install / Update**. The installer detects
    the usual OBS installation; use **Browse** for a custom or portable folder.
    It checks OBS 32.2.2 / Qt 6.11.1 before installing. Start OBS from your usual
@@ -142,8 +142,13 @@ default to 720p. Click Apply again after changing the OBS canvas size.
 
 This controls the native source's rendered pixel dimensions, with DPI-aware
 window sizing. The size lock uses the selected resolution; you do not need to
-unlock playback to change it. YouTube stream quality remains automatic and may
-be lower than the selected render resolution. The overlay continues to use the
+unlock playback to change it. The watch-page controller requests standard 1080p when available, or the best
+available lower resolution. This is separate from the rendered output size.
+It checks late-arriving quality options and reasserts the preference at most
+once every 15 seconds while outside Interact mode. The dock reports the video's
+actual decoded height (for example, `Video: 1080p`), rather than just the requested
+quality. Bandwidth, source availability and changes to YouTube's watch-page
+controls can still affect the delivered quality. The overlay continues to use the
 OBS canvas size. Sources added by the plugin fit to the canvas automatically;
 if you manually transformed an older source, use OBS's Fit to Screen as needed.
 
@@ -233,4 +238,18 @@ Pause/resume commands now preserve the current browser frame and do not seek bac
 
 Stop output closes the dedicated browser/window, releases its worker lease, cancels pending requests/retries and releases capture textures and browser audio capture. Start queue / retry recreates the output using the existing account session and saved placement. OBS shutdown closes the output before its scene/browser teardown and joins the audio capture thread. Shared OBS browser processes may remain while other OBS sources use them; the plugin does not terminate unrelated processes. Minimizing or closing a locked output still parks it intentionally so capture can continue; use Stop output to release it.
 
-Plugin 0.1.11 synchronizes the lower-third title with the visible video after the crossfade. Update the station to v1.7.13 as well. Older browser outputs retain their existing behavior.
+Plugin 0.1.12 synchronizes the lower-third title with the visible video after the crossfade. Update the station to v1.7.13 as well. Older browser outputs retain their existing behavior.
+
+## Station connection warning
+
+OBS and the Playback station are separate programs. Start `start-player.bat` in the Playback folder and leave it running, or install the station's Windows automatic startup task. The plugin checks station health even when output auto-start is off. A red banner opens the fKey Playback dock when the station is missing, unreachable, or on a different port. A connected station does not mean the output is playing; check the output status beneath it.
+
+If the station disappears during playback, the plugin pauses the video and silences its OBS audio until a valid station and queue connection returns. Reconnection resumes the saved station checkpoint. Checks use bounded requests and do not start another station process.
+
+## Optional Twitch stream restart
+
+In the fKey Playback dock, **Restart Twitch stream before 48h** is off by default. When enabled, the plugin stops OBS's main Twitch stream at 47 hours 55 minutes, waits two minutes after OBS confirms it has stopped, then starts it again. The two-minute gap exceeds Twitch's 90-second disconnect-protection window so a new broadcast can begin. Playback keeps its queue and video running during the offline gap.
+
+Start the initial stream manually. This option controls the main OBS Twitch service (including recognized direct Twitch ingest URLs), not multistream plugin outputs or other platforms. The dock shows the next restart or pending reconnect; uncheck the option to cancel. Manual stream stops do not restart automatically. Changing the service/profile, stopping the Playback output, disabling the option, or exiting OBS cancels a pending restart. A failed stop/start is not retried indefinitely, and an unavailable Playback station/output prevents a scheduled reconnect. The setting is saved across OBS restarts, but no broadcast is started merely by opening OBS.
+
+The scheduling policy is tested using accelerated monotonic time, including the 47h55m boundary, two-minute gap, manual stops, cancellation, service changes and failures. A real 48-hour Twitch broadcast has not been tested. See [Twitch broadcasting guidelines](https://help.twitch.tv/s/article/broadcasting-guidelines) and [Disconnect Protection](https://help.twitch.tv/s/article/Disconnect-Protection).

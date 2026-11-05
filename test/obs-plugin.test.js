@@ -38,6 +38,47 @@ function harness(){
  }};
 }
 
+test('watch-page quality prefers 1080p, retries boundedly and leaves queue/audio controls intact',()=>{
+ const h=harness(),calls=[];
+ h.player.getAvailableQualityLevels=()=>['medium','hd2160','hd720','hd1080'];
+ h.player.getPlaybackQuality=()=> 'medium';
+ h.player.setPlaybackQualityRange=(...args)=>calls.push(['range',...args]);
+ h.player.setPlaybackQuality=value=>calls.push(['quality',value]);
+ const report=h.run();
+ assert.equal(JSON.stringify(calls),JSON.stringify([['range','hd1080','hd1080'],['quality','hd1080']]));
+ assert.equal(report.qualityRequested,'hd1080');assert.equal(report.videoHeight,720);
+ assert.equal(h.video.currentTime,35);assert.equal(h.video.volume,.7);assert.equal(h.video.paused,false);
+ h.advance(1000);h.run();assert.equal(calls.length,2);
+ h.advance(14000);h.run();assert.equal(calls.length,4);
+ h.advance(15000);h.run({interacting:true});assert.equal(calls.length,4);
+ h.run({paused:true});assert.equal(h.video.paused,true);assert.equal(h.video.currentTime,35);
+});
+
+test('quality follows available lower levels and late metadata without touching ads or access prompts',()=>{
+ const h=harness(),calls=[];let levels=[];
+ h.player.getAvailableQualityLevels=()=>levels;
+ h.player.setPlaybackQuality=value=>calls.push(value);
+ h.run();assert.equal(calls.length,0);
+ levels=['small','large','hd720'];h.advance(5000);h.run();assert.equal(calls[0],'hd720');
+ levels=['hd1080','hd720'];h.advance(15000);h.run();assert.equal(calls[1],'hd1080');
+ h.setAd(true);h.advance(15000);h.run();assert.equal(calls.length,2);
+ h.setAd(false);h.setBarrier(true);h.run();assert.equal(calls.length,2);
+});
+
+test('missing, throwing or unsupported watch-page quality APIs do not break playback',()=>{
+ for(const kind of ['missing','throws','unsupported','setter-throws']) {
+  const h=harness();
+  if(kind==='throws')h.player.getAvailableQualityLevels=()=>{throw Error('changed API');};
+  if(kind==='unsupported')h.player.getAvailableQualityLevels=()=>['auto','unknown'];
+  if(kind==='setter-throws'){
+   h.player.getAvailableQualityLevels=()=>['hd1080'];
+   h.player.setPlaybackQualityRange=()=>{throw Error('not ready');};
+   h.player.setPlaybackQuality=()=>{throw Error('not ready');};
+  }
+  const report=h.run();assert.equal(report.position,35);assert.equal(report.status,'Playing');assert.equal(report.qualityRequested,undefined);
+ }
+});
+
 test('Premium marketing popups cannot hold locked playback in the normal YouTube layout',()=>{
  const h=harness();h.run({locked:true});h.advance(5000);h.video.currentTime=40;
  h.setPromotion(true);const report=h.run({locked:true});

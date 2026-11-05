@@ -1,3 +1,33 @@
+# fKey Playback v1.7.14 — 1080p, station warnings and optional Twitch restart
+
+Update **both the station and OBS plugin 0.1.12**, choosing the installer matching OBS **32.2.2** or **33.0.0**. No database migration is required; preserve `data/` and launcher configuration, close OBS before installing the plugin, and stop the station/startup task before extracting the station ZIP.
+
+## Changes
+
+- **1080p preference:** request standard 1080p from the normal YouTube watch-page player, fall back to the best available lower quality, and recheck late-arriving quality options. The dock shows the actual decoded video height. This is separate from output resolution: select **1920 x 1080** and Apply for a full HD OBS source. Bandwidth, source availability and YouTube watch-page changes can still affect quality. IFrame Browser Source quality remains controlled by YouTube.
+- **Missing station warning:** show a red **PLAYBACK STATION NOT RUNNING** banner and open the dock when the station is missing or unreachable. Checks also run with output auto-start off. Instructions point to `start-player.bat`; OBS alone does not launch the station. A lost connection pauses and hides video and silences source audio until valid station/queue connectivity returns.
+- **Optional Twitch restart:** the saved **Restart Twitch stream before 48h** option is **off by default**. It stops the main OBS Twitch stream at **47h55m**, waits **two minutes after stopping**, and starts it again while the Playback queue continues. The gap exceeds Twitch's documented 90-second disconnect-protection window. Start the initial stream manually. Other services and multistream plugin outputs are not controlled. Manual stops stay stopped; disabling the option, stopping output, changing service/profile or exiting OBS cancels pending restarts. Failed stop/start operations are bounded and require attention rather than retrying indefinitely.
+- Preserve overlay title sync, saved checkpoints, signed-in OBS browser context, queue controls, experimental ad filtering and browser recovery.
+
+## Downloads
+
+- **Playback-v1.7.14.zip** — station, source, tests and documentation.
+- **fKey-Playback-OBS-Plugin-Setup-0.1.12.exe** — OBS 32.2.2 installer.
+- **fplayback-youtube-0.1.12-windows-x64.zip** — OBS 32 plugin, installer, corresponding source and licenses.
+- **fKey-Playback-OBS-Plugin-Setup-0.1.12-OBS33.exe** — OBS 33.0.0 installer.
+- **fplayback-youtube-0.1.12-OBS33-windows-x64.zip** — OBS 33 plugin, installer, corresponding source and licenses.
+- SHA-256 checksums accompany all downloads.
+
+## Verification and limits
+
+Syntax checks and the full app suite: **198 passed, one platform-specific skip**. Each OBS build runs **11 native tests**, including the accelerated stream restart policy. Quality tests cover 1080p preference, lower-resolution fallback, late metadata, bounded retries, Interact, ads, access barriers and unavailable/changing APIs. Restart policy tests cover the time boundary, offline gap, manual stops, disabled/other-service states, cancellation, unready output, timeouts and long uptimes.
+
+Local OBS 33 showed actual **Video: 1080p**, with output saved at 1920 x 1080 and active audio. Missing-station startup and active disconnect/reconnect were verified: a warning opened the dock, disconnected output went black/silent, and the saved video resumed after the station returned. The Twitch restart checkbox was verified unchecked; **no live Twitch stream was started or restarted for testing, and a real 48-hour run remains untested**. Existing members-only, experimental ad-filtering and multi-day memory limits from v1.7.12 still apply.
+
+References: [Twitch broadcasting guidelines](https://help.twitch.tv/s/article/broadcasting-guidelines) and [Disconnect Protection](https://help.twitch.tv/s/article/Disconnect-Protection).
+
+---
+
 # fKey Playback v1.7.13 — overlay title sync
 
 The overlay now keeps the outgoing video's title while the native OBS output holds its frame. It changes to the incoming title after the 300 ms video crossfade, rather than when the queue advances.

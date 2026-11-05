@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.14 — 1080p preference, station warning and optional Twitch restart
+
+- Prefer standard 1080p on the YouTube watch page, use available lower-quality fallbacks, and display actual decoded video height.
+- Show a prominent station connection warning even with output auto-start disabled. Pause, hide and silence disconnected output; reconnect at the station checkpoint.
+- Add a saved, off-by-default main Twitch stream restart option: stop at 47h55m, wait two minutes, then reconnect. Include cancellation, service checks and bounded failure handling.
+- Ship plugin/installers 0.1.12 for OBS 32.2.2 and 33.0.0; update setup documentation and add quality and accelerated restart-policy tests. No database migration.
+
 ## v1.7.13 — overlay title sync
 
 - Hold the outgoing overlay title until the next video finishes its 300 ms crossfade in the native OBS output.

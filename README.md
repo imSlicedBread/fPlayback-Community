@@ -1,4 +1,4 @@
-# fKey Playback 1.7.13
+# fKey Playback 1.7.14
 
 Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS Browser Source and a separate operator dashboard.
 
@@ -6,7 +6,17 @@ Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS 
 
 Supporting documentation: [release notes](docs/RELEASE_NOTES.md), [storage verification](docs/BUILD-REPORT.md), and [historical performance measurements](docs/PERFORMANCE.md).
 
-## New in v1.7.13 — overlay title sync
+## New in v1.7.14 — 1080p, station warnings and optional Twitch restarts
+
+Plugin **0.1.12** prefers 1080p YouTube video when available and shows the actual decoded height in the OBS dock. Output resolution remains a separate setting: choose 1920 x 1080 and Apply for a full HD source. Lower-resolution videos use the best available lower quality.
+
+The dock opens a red warning when the Playback station is unavailable, even if output auto-start is off. Run `start-player.bat` or install Windows automatic startup. A lost station pauses and hides video, silences audio, and reconnects automatically when the station returns.
+
+**Restart Twitch stream before 48h** is optional and off by default. It stops OBS's main Twitch stream at 47h55m, waits two minutes, then starts it again while Playback continues. Manual stops do not trigger an automatic restart. Uncheck to cancel a pending restart. Other services and multistream plugin outputs are not controlled.
+
+Update both the station app and the matching OBS 32 or OBS 33 plugin. No database migration is needed. Stream restart timing is tested with accelerated time; a real 48-hour broadcast remains untested.
+
+## Included from v1.7.13 — overlay title sync
 
 The OBS overlay keeps the outgoing video's title while the next video loads, then changes after the 300 ms crossfade. Update the station and install plugin **0.1.11** for your OBS version. Next and Previous were verified live in OBS 33; the original playback position was restored after testing. No database migration is needed.
 
