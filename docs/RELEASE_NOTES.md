@@ -1,3 +1,24 @@
+# fKey Playback v1.7.15 — visible OBS auto-start
+
+When Windows auto-start launches OBS after sign-in, it now opens the main OBS window visibly. The launcher still waits for a healthy Playback station before opening the dashboard and OBS, and avoids opening a duplicate OBS process. Previously OBS could be running with its main window hidden.
+
+## Upgrade
+
+- Stop Playback and its startup task, preserve `data/` and launcher configuration, then extract **Playback-v1.7.15.zip** into the existing station folder and restart the station.
+- Existing startup tasks reference the updated script in place. If startup is not installed, or you moved the folder, run **INSTALL-AUTO-START.bat** and choose **Y** to open OBS after Playback is ready.
+- Keep **Start this output when OBS opens** enabled in the fKey Playback dock to resume queued video automatically.
+- Plugin/installers **0.1.12** for OBS 32.2.2 and OBS 33.0.0 are unchanged from v1.7.14 and included again for convenience. Users already on 0.1.12 do not need a plugin reinstall. No database migration is required.
+
+## Verification
+
+Syntax checks and the full local app suite pass: **198 passed, one platform-specific skip**. All four Windows startup checks pass, including a regression assertion that OBS launches with normal window visibility only after the station health check.
+
+The real scheduled tasks were exercised locally: the sign-in launcher waited while Playback was stopped, the boot task started v1.7.14 under **LOCAL SERVICE**, and OBS started after the station was healthy. After correcting visibility, a clean sign-in-task launch opened OBS 33 visibly and resumed the saved video at **1080p** with active audio. The queue and saved position were preserved. This was a scheduled-task execution test, **not a complete Windows reboot/sign-in test**. The tested launcher is unchanged except for this release's metadata.
+
+The release contains the station ZIP and SHA-256 checksum plus the unchanged OBS 32/33 installers, plugin ZIPs and their checksums. Earlier 1080p, station warning, optional Twitch restart, ad filtering and recovery behavior remains included. See v1.7.14 below for test limits, including the untested live 48-hour Twitch restart.
+
+---
+
 # fKey Playback v1.7.14 — 1080p, station warnings and optional Twitch restart
 
 Update **both the station and OBS plugin 0.1.12**, choosing the installer matching OBS **32.2.2** or **33.0.0**. No database migration is required; preserve `data/` and launcher configuration, close OBS before installing the plugin, and stop the station/startup task before extracting the station ZIP.

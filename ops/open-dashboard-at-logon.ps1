@@ -26,7 +26,7 @@ if ($ObsPath) {
     if (-not (Test-Path -LiteralPath $ObsPath -PathType Leaf)) { throw 'Configured OBS executable is missing.' }
     $processName = [IO.Path]::GetFileNameWithoutExtension($ObsPath)
     if (-not (Get-Process -Name $processName -ErrorAction SilentlyContinue)) {
-        Start-Process -FilePath $ObsPath -WorkingDirectory (Split-Path -Parent $ObsPath) -WindowStyle Hidden
+        Start-Process -FilePath $ObsPath -WorkingDirectory (Split-Path -Parent $ObsPath) -WindowStyle Normal
     }
 }
 exit 0

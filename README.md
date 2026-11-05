@@ -1,4 +1,4 @@
-# fKey Playback 1.7.14
+# fKey Playback 1.7.15
 
 Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS Browser Source and a separate operator dashboard.
 
@@ -6,7 +6,15 @@ Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS 
 
 Supporting documentation: [release notes](docs/RELEASE_NOTES.md), [storage verification](docs/BUILD-REPORT.md), and [historical performance measurements](docs/PERFORMANCE.md).
 
-## New in v1.7.14 — 1080p, station warnings and optional Twitch restarts
+## New in v1.7.15 — visible OBS auto-start
+
+Windows auto-start now opens OBS visibly after the Playback station is healthy. The boot server still starts before sign-in; the interactive sign-in task waits for it, opens the dashboard, and launches OBS once. Previously OBS could start with its main window hidden.
+
+The real scheduled tasks were tested locally with OBS 33: the launcher waited while the station was stopped, Playback started under LOCAL SERVICE, and OBS opened after the health check. A clean launch resumed the saved video at 1080p with audio. The test did not reboot Windows.
+
+Update the station files while preserving `data/` and your launcher configuration. Existing startup tasks use the updated script in place. Run `INSTALL-AUTO-START.bat` and choose Y for OBS if startup is not installed or you moved the folder. Plugin 0.1.12 is unchanged; no plugin reinstall or database migration is needed.
+
+## Included from v1.7.14 — 1080p, station warnings and optional Twitch restarts
 
 Plugin **0.1.12** prefers 1080p YouTube video when available and shows the actual decoded height in the OBS dock. Output resolution remains a separate setting: choose 1920 x 1080 and Apply for a full HD source. Lower-resolution videos use the best available lower quality.
 

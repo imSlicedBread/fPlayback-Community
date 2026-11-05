@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.15 — visible OBS auto-start
+
+- Open OBS normally in the signed-in desktop after Playback passes the startup health check, instead of launching OBS with its main window hidden.
+- Add a Windows regression check for visible OBS launch while retaining readiness ordering and duplicate-process prevention.
+- Verify real scheduled-task startup under LOCAL SERVICE and visible OBS 33 playback at 1080p with audio, without a Windows reboot.
+- OBS plugin/installers remain 0.1.12. No database migration or plugin reinstall is needed for users already on that version.
+
 ## v1.7.14 — 1080p preference, station warning and optional Twitch restart
 
 - Prefer standard 1080p on the YouTube watch page, use available lower-quality fallbacks, and display actual decoded video height.
