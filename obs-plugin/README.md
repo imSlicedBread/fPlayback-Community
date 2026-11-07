@@ -1,4 +1,4 @@
-# fKey Playback OBS plugin — 0.1.12 — OBS 32 and OBS 33
+# fKey Playback OBS plugin — 0.1.13 — OBS 32 and OBS 33
 
 This native plugin opens a **normal YouTube watch page**, using OBS Browser's
 default browser context. It does not use an iframe or a Chrome extension. Sign
@@ -14,12 +14,12 @@ Browser Source embedded-player workflow has not been verified for members-only p
 
 ## OBS 32 and OBS 33 builds
 
-Playback v1.7.14 provides separate Windows x64 builds. Use the installer matching your installed OBS version; each build retains an exact CEF version/API-hash guard.
+The plugin has separate Windows x64 builds. Installer 0.1.13 adds OBS 33.0.1 support. Use the installer matching your OBS version. Each build checks its matching CEF version and API hash.
 
 | OBS | Chromium / CEF | Installer |
 | --- | --- | --- |
-| 32.2.2 / Qt 6.11.1 | Chromium 127.0.6533.120 / CEF 127.145.7 | `fKey-Playback-OBS-Plugin-Setup-0.1.12.exe` |
-| 33.0.0 / Qt 6.11.1 | Chromium 150.0.7871.252 / CEF 150.0.20 | `fKey-Playback-OBS-Plugin-Setup-0.1.12-OBS33.exe` |
+| 32.2.2 / Qt 6.11.1 | Chromium 127.0.6533.120 / CEF 127.145.7 | `fKey-Playback-OBS-Plugin-Setup-0.1.13.exe` |
+| 33.0.0 or 33.0.1 / Qt 6.11.1 | Chromium 150.0.7871.252 / CEF 150.0.20 | `fKey-Playback-OBS-Plugin-Setup-0.1.13-OBS33.exe` |
 
 OBS 33 uses `core/obs-browser` for its built-in browser. This plugin still installs in the legacy third-party plugin folder supported by OBS 33. Neither installer replaces OBS, Chromium, or account data. The filtered child browser uses that OBS instance's existing global request context; no cookie copying, separate login store, extension or remote debugging port is introduced. OBS's own profile migration remains responsible for carrying a login across an OBS upgrade.
 
@@ -51,17 +51,17 @@ Ads still play and take their normal time in the signed-in output window. This s
 
 ## Install and test
 
-Built for **Windows x64, OBS 32.2.2 with Qt 6.11.1**, OBS Browser panel API 3.
-Other OBS/Qt versions have not been tested. The plugin provides a dock, a watch
+Built for **Windows x64** with the OBS and Qt versions in the table above and
+OBS Browser panel API 3. The plugin provides a dock, a watch
 window and a native **Playback YouTube Output** video source. Its native source
 uses OBS's Windows Graphics Capture library directly: ordinary Window Capture
 excludes windows owned by OBS itself.
 
 1. Close OBS. Back up your OBS scene collection/profile.
-2. Double-click **fKey-Playback-OBS-Plugin-Setup-0.1.12.exe**, approve the Windows
+2. Double-click the matching installer from the table, approve the Windows
    administrator prompt, and click **Install / Update**. The installer detects
    the usual OBS installation; use **Browse** for a custom or portable folder.
-   It checks OBS 32.2.2 / Qt 6.11.1 before installing. Start OBS from your usual
+   It checks the OBS, Qt and Chromium versions before installing. Start OBS from your usual
    shortcut after installation. No PowerShell commands or .NET install is needed.
    Manual installation remains available: copy `obs-plugins/64bit/fplayback-youtube.dll`
    from the ZIP into your OBS `obs-plugins/64bit` folder with OBS closed.

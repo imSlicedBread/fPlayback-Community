@@ -1,3 +1,22 @@
+# fKey Playback v1.7.16 — OBS 33.0.1 installer
+
+The Windows x64 **OBS 33** installer **0.1.13** now accepts **OBS 33.0.1** and **33.0.0**. It checks for Qt 6.11.1 and CEF 150.0.20 before copying files. OBS 32.2.2 uses its own installer.
+
+## Downloads
+
+- **Playback-v1.7.16.zip** contains the station and bundled yt-dlp.
+- **fKey-Playback-OBS-Plugin-Setup-0.1.13-OBS33.exe** installs the plugin for OBS 33.0.0 or 33.0.1.
+- **fKey-Playback-OBS-Plugin-Setup-0.1.13.exe** installs the plugin for OBS 32.2.2.
+- The plugin ZIPs contain the matching installer, DLL, source and licenses. SHA-256 checksums accompany the downloads.
+
+Close OBS before running the plugin installer. When updating the station, stop Playback and its startup task and preserve `data/` and launcher configuration before extracting the ZIP.
+
+## Verification
+
+The installer passed validation, install, upgrade and rollback tests using OBS 33.0.0 and 33.0.1 runtime files and temporary install folders. Each native OBS build passed 11 tests. The station test suite passed 198 tests with one skip.
+
+---
+
 # fKey Playback v1.7.15 — visible OBS auto-start
 
 When Windows auto-start launches OBS after sign-in, it now opens the main OBS window visibly. The launcher still waits for a healthy Playback station before opening the dashboard and OBS, and avoids opening a duplicate OBS process. Previously OBS could be running with its main window hidden.

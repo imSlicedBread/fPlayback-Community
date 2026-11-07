@@ -6,7 +6,7 @@ if (Get-Process obs64 -ErrorAction SilentlyContinue) { Wait-Process -Name obs64 
 if (Get-Process obs64 -ErrorAction SilentlyContinue) { throw 'Close OBS before installing the Playback plugin.' }
 $version = (Get-Item -LiteralPath (Join-Path $ObsPath 'bin/64bit/obs64.exe')).VersionInfo
 $is33 = $version.FileMajorPart -eq 33
-if (!(($version.FileMajorPart -eq 32 -and $version.FileMinorPart -eq 2 -and $version.FileBuildPart -eq 2) -or ($is33 -and $version.FileMinorPart -eq 0 -and $version.FileBuildPart -eq 0))) {throw 'This build supports OBS 32.2.2 or 33.0.0 only.'}
+if (!(($version.FileMajorPart -eq 32 -and $version.FileMinorPart -eq 2 -and $version.FileBuildPart -eq 2) -or ($is33 -and $version.FileMinorPart -eq 0 -and $version.FileBuildPart -in @(0, 1)))) {throw 'This build supports OBS 32.2.2, 33.0.0 or 33.0.1.'}
 $packageFolder = if ($is33) {'package-obs33'} else {'package'}
 $source = Join-Path $PSScriptRoot "$packageFolder/obs-plugins/64bit/fplayback-youtube.dll"
 $browserFolder = if ($is33) {'core/obs-browser'} else {'obs-plugins/64bit'}

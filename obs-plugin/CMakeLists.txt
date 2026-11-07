@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(fplayback-youtube VERSION 0.1.12 LANGUAGES CXX)
+project(fplayback-youtube VERSION 0.1.13 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 option(PLAYBACK_OBS33 "Build for the pinned OBS 33 Chromium 150 runtime" OFF)
 add_compile_definitions(PLAYBACK_OBS33=$<BOOL:${PLAYBACK_OBS33}>)

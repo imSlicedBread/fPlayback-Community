@@ -56,7 +56,7 @@ static LRESULT CALLBACK windowProc(HWND window,UINT message,WPARAM wp,LPARAM lp)
   case WM_CREATE:
     font=CreateFontW(-16,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH,L"Segoe UI");
     control(window,L"STATIC",L"Install the fKey Playback plugin for OBS",0,24,20,540,27);
-    control(window,L"STATIC",pi::obs33?L"Close OBS first. Scenes, settings and YouTube login stay in place.\nOBS 33.0.0 / Chromium 150 build (Windows x64).":L"Close OBS first. Scenes, settings and YouTube login stay in place.\nOBS 32.2.2 / Chromium 127 build (Windows x64).",0,24,56,540,48);
+    control(window,L"STATIC",pi::obs33?L"Close OBS first. Scenes, settings and YouTube login stay in place.\nOBS 33.0.0 and 33.0.1 / Chromium 150 (Windows x64).":L"Close OBS first. Scenes, settings and YouTube login stay in place.\nOBS 32.2.2 / Chromium 127 build (Windows x64).",0,24,56,540,48);
     control(window,L"STATIC",L"OBS installation folder",0,24,119,540,22);
     folderField=control(window,L"EDIT",detectFolder().c_str(),WS_BORDER|WS_TABSTOP|ES_AUTOHSCROLL,24,145,430,27,101);
     control(window,L"BUTTON",L"Browse...",WS_TABSTOP,464,144,100,29,102);

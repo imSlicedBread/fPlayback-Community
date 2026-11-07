@@ -1,12 +1,16 @@
-# fKey Playback 1.7.15
+# fKey Playback 1.7.16
 
 Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS Browser Source and a separate operator dashboard.
 
-[Releases](https://github.com/imSlicedBread/Playback/releases) · [MIT license](LICENSE) · [Storage and migration](docs/STORAGE.md) · [Security](SECURITY.md)
+[Releases](https://github.com/imSlicedBread/fPlayback-Community/releases) · [MIT license](LICENSE) · [Storage and migration](docs/STORAGE.md) · [Security](SECURITY.md)
 
 Supporting documentation: [release notes](docs/RELEASE_NOTES.md), [storage verification](docs/BUILD-REPORT.md), and [historical performance measurements](docs/PERFORMANCE.md).
 
-## New in v1.7.15 — visible OBS auto-start
+## New in v1.7.16 — OBS 33.0.1 installer
+
+The Windows x64 OBS 33 installer **0.1.13** supports **OBS 33.0.0 and 33.0.1**. It checks for Qt 6.11.1 and CEF 150.0.20 before installing. Close OBS and choose **fKey-Playback-OBS-Plugin-Setup-0.1.13-OBS33.exe**. OBS 32.2.2 uses the installer without the **-OBS33** suffix. See the [OBS plugin setup guide](obs-plugin/README.md).
+
+## Included from v1.7.15 — visible OBS auto-start
 
 Windows auto-start now opens OBS visibly after the Playback station is healthy. The boot server still starts before sign-in; the interactive sign-in task waits for it, opens the dashboard, and launches OBS once. Previously OBS could start with its main window hidden.
 

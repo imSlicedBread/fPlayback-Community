@@ -2,6 +2,7 @@ param([string]$ObsPath = 'C:\Program Files\obs-studio', [ValidateSet('32','33')]
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = $PSScriptRoot
+$packageVersion = '0.1.13'
 $deps = Join-Path $root '.deps'
 $is33 = $ObsMajor -eq '33'
 $build = Join-Path $root $(if ($is33) {'build-obs33'} else {'build'})
@@ -12,8 +13,9 @@ $obsHeaders = Join-Path $deps $(if ($is33) {'obs33-source/obs-studio-33.0.0'} el
 $browserRuntime = if ($is33) {Join-Path $ObsPath 'core/obs-browser'} else {Join-Path $ObsPath 'obs-plugins/64bit'}
 if (!(Test-Path -LiteralPath (Join-Path $browserRuntime 'libcef.dll'))) {throw 'The selected OBS browser runtime was not found.'}
 $obsVersion = (Get-Item -LiteralPath (Join-Path $ObsPath 'bin/64bit/obs64.exe')).VersionInfo
-$expectedObs = if ($is33) {'33.0.0'} else {'32.2.2'}
-if (("$($obsVersion.FileMajorPart).$($obsVersion.FileMinorPart).$($obsVersion.FileBuildPart)") -ne $expectedObs) {throw "The selected runtime must be OBS $expectedObs. Choose the matching -ObsMajor and -ObsPath before building."}
+$supportedObs = if ($is33) {'33.0.0', '33.0.1'} else {'32.2.2'}
+$actualObs = "$($obsVersion.FileMajorPart).$($obsVersion.FileMinorPart).$($obsVersion.FileBuildPart)"
+if ($actualObs -notin $supportedObs) {throw "The selected runtime must be OBS $($supportedObs -join ' or '). Choose the matching -ObsMajor and -ObsPath before building."}
 $cefVersion = (Get-Item -LiteralPath (Join-Path $browserRuntime 'libcef.dll')).VersionInfo
 $expectedCef = if ($is33) {'150.0.20'} else {'127.145.7'}
 if (("$($cefVersion.FileMajorPart).$($cefVersion.FileMinorPart).$($cefVersion.FileBuildPart)") -ne $expectedCef) {throw "The selected OBS runtime must contain CEF $expectedCef."}
@@ -75,11 +77,13 @@ New-Item -ItemType Directory -Force $sourcePath | Out-Null
 foreach ($name in @('src', 'vendor', 'CMakeLists.txt', 'build-windows.ps1', 'install-local.ps1', 'resources.qrc', 'watch-controller.js', 'README.md', 'LICENSE')) {
   Copy-Item -LiteralPath (Join-Path $root $name) -Destination $sourcePath -Recurse -Force
 }
-$installerName = "fKey-Playback-OBS-Plugin-Setup-0.1.12$variant.exe"
+$installerName = "fKey-Playback-OBS-Plugin-Setup-$packageVersion$variant.exe"
 $installer = Join-Path $root $installerName
 Copy-Item -LiteralPath "$package/$installerName" -Destination $installer -Force
 ((Get-FileHash -LiteralPath $installer).Hash.ToLowerInvariant()+'  '+(Split-Path -Leaf $installer)) | Set-Content -LiteralPath ($installer+'.sha256') -Encoding ascii
-Compress-Archive -LiteralPath "$package/obs-plugins", "$package/source", "$package/README.md", "$package/LICENSE", $installer -DestinationPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip" -Force
-((Get-FileHash -LiteralPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip").Hash.ToLowerInvariant()+"  fplayback-youtube-0.1.12$variant-windows-x64.zip") | Set-Content -LiteralPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip.sha256" -Encoding ascii
-Get-FileHash -LiteralPath "$root/fplayback-youtube-0.1.12$variant-windows-x64.zip" -Algorithm SHA256 | Format-List
+$archiveName = "fplayback-youtube-$packageVersion$variant-windows-x64.zip"
+$archivePath = Join-Path $root $archiveName
+Compress-Archive -LiteralPath "$package/obs-plugins", "$package/source", "$package/README.md", "$package/LICENSE", $installer -DestinationPath $archivePath -Force
+((Get-FileHash -LiteralPath $archivePath).Hash.ToLowerInvariant()+"  "+$archiveName) | Set-Content -LiteralPath ($archivePath+'.sha256') -Encoding ascii
+Get-FileHash -LiteralPath $archivePath -Algorithm SHA256 | Format-List
 Write-Output "Built plugin: $package/obs-plugins/64bit/fplayback-youtube.dll"

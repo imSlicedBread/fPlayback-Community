@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.16 — OBS 33.0.1 installer
+
+- Release installer 0.1.13 with support for OBS 33.0.0 and 33.0.1. The installer still checks Qt 6.11.1 and CEF 150.0.20.
+- Provide the separate OBS 32.2.2 installer and update the station's OBS setup instructions.
+
 ## v1.7.15 — visible OBS auto-start
 
 - Open OBS normally in the signed-in desktop after Playback passes the startup health check, instead of launching OBS with its main window hidden.

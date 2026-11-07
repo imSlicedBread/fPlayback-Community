@@ -35,12 +35,15 @@ inline bool versionMatches(const fs::path &path, int major, int minor, int patch
 }
 inline void validate(const fs::path &root) {
   if (!root.is_absolute()) throw std::runtime_error("Choose the full OBS installation folder.");
-  if (!fs::is_regular_file(root/L"bin/64bit/obs64.exe") ||
+  const auto obsExe=root/L"bin/64bit/obs64.exe";
+  if (!fs::is_regular_file(obsExe) ||
       !fs::is_regular_file(root/L"bin/64bit/libobs-winrt.dll"))
     throw std::runtime_error("Choose the OBS installation folder containing bin and obs-plugins.");
-  if (!versionMatches(root/L"bin/64bit/obs64.exe",obs33?33:32,obs33?0:2,obs33?0:2) ||
-      !versionMatches(root/L"bin/64bit/Qt6Core.dll",6,11,1))
-    throw std::runtime_error(obs33?"This installer requires OBS 33.0.0 with Qt 6.11.1. Use the matching OBS plugin installer. Nothing was changed.":"This installer requires OBS 32.2.2 with Qt 6.11.1. Use the matching OBS plugin installer. Nothing was changed.");
+  const bool supportedObs=obs33
+    ? versionMatches(obsExe,33,0,0) || versionMatches(obsExe,33,0,1)
+    : versionMatches(obsExe,32,2,2);
+  if (!supportedObs || !versionMatches(root/L"bin/64bit/Qt6Core.dll",6,11,1))
+    throw std::runtime_error(obs33?"This installer requires OBS 33.0.0 or 33.0.1 with Qt 6.11.1. Use the matching OBS plugin installer. Nothing was changed.":"This installer requires OBS 32.2.2 with Qt 6.11.1. Use the matching OBS plugin installer. Nothing was changed.");
   if(!fs::is_regular_file(browserFolder(root)/L"obs-browser.dll"))
     throw std::runtime_error("The matching OBS browser module is missing. Reinstall the complete supported OBS build; do not replace individual Chromium DLLs. Nothing was changed.");
   if (!versionMatches(browserFolder(root)/L"libcef.dll",obs33?150:127,obs33?0:145,obs33?20:7))
