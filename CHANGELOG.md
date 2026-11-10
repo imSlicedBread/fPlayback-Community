@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.18 — Windows updater compatibility
+
+- Read the Windows Task Scheduler action's `Arguments` property so the updater recognizes existing AUTO-START tasks.
+- Use a native Windows task action in the updater regression test.
+
 ## v1.7.17 — Windows updater
 
 - Add **UPDATE-PLAYBACK.bat** for stations that start with Windows. It finds the installation from the boot task, applies verified files, and restarts the station if it was running.

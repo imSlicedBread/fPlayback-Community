@@ -47,7 +47,7 @@ function Update-Playback([string] $Source) {
     $actions = @($task.Actions)
     if ($actions.Count -ne 1 -or [IO.Path]::GetFileName($actions[0].Execute) -ne 'node.exe' -or
         $actions[0].WorkingDirectory -notmatch '^[A-Za-z]:[\\/]' -or
-        $actions[0].Argument -notmatch '^"([^"]+)" --port ([0-9]{1,5})$') {
+        $actions[0].Arguments -notmatch '^"([^"]+)" --port ([0-9]{1,5})$') {
         throw 'The Playback boot task uses an unrecognized command. Its files and task were left untouched.'
     }
     $entry = $Matches[1]

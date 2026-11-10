@@ -1,3 +1,15 @@
+# fKey Playback v1.7.18 — Windows updater compatibility
+
+**UPDATE-PLAYBACK.bat** now recognizes the boot task created by **INSTALL-AUTO-START.bat**. The previous updater could reject a valid task before copying any files.
+
+1. Download **Playback-v1.7.18.zip** and extract it to a separate local folder.
+2. In the extracted **Playback** folder, double-click **UPDATE-PLAYBACK.bat** and approve the Windows administrator prompt.
+3. When the updater finishes, refresh your existing dashboard.
+
+The updater preserves your station data and startup settings. It restarts Playback if it was running. The release also includes the OBS 0.1.13 installers and their checksums.
+
+---
+
 # fKey Playback v1.7.17 — Windows updater
 
 Stations that start with Windows can now update in place. The updater finds the installation from the boot task, verifies and copies the release files, and restarts Playback if it was running. It preserves playlists, settings, sign-in tokens, launcher settings, and Windows startup options. If copying fails, it attempts to restore the previous app files.

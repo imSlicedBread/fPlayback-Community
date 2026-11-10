@@ -53,12 +53,9 @@ test('Windows updater keeps the station and startup configuration through update
 $installed = ${quote(installed)}
 $release = ${quote(release)}
 $entry = "$installed\ops\.\boot-service.mjs"
+$action = New-ScheduledTaskAction -Execute 'C:\Program Files\nodejs\node.exe' -WorkingDirectory $installed -Argument ('"{0}" --port 4199' -f $entry)
 $task = [pscustomobject]@{
-    Actions = @([pscustomobject]@{
-        Execute = 'C:\Program Files\nodejs\node.exe'
-        WorkingDirectory = $installed
-        Argument = '"{0}" --port 4199' -f $entry
-    })
+    Actions = @($action)
     Settings = [pscustomobject]@{ Enabled = $true }
     State = 'Running'
 }
