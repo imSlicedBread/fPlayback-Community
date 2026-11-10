@@ -30,7 +30,8 @@ archive = out / f'Playback-v{version}.zip'
 files = []
 for name in ('README.md', 'LICENSE', 'SECURITY.md', 'TRADEMARKS.md',
              'CHANGELOG.md', 'package.json', 'server.js', 'start-player.bat', 'start-player.sh',
-             'INSTALL-AUTO-START.bat', 'UNINSTALL-AUTO-START.bat', 'CHECK-AUTO-START.bat'):
+             'INSTALL-AUTO-START.bat', 'UNINSTALL-AUTO-START.bat', 'CHECK-AUTO-START.bat',
+             'UPDATE-PLAYBACK.bat'):
     files.append(root / name)
 for folder in ('docs', 'lib', 'public', 'ops', 'test', 'tools', '.github'):
     files.extend(p for p in (root / folder).rglob('*') if p.is_file() and not p.name.endswith('.download'))
@@ -41,13 +42,21 @@ for name in ('README.md', 'LICENSE', 'CMakeLists.txt', 'build-windows.ps1', 'ins
 files.extend(p for p in (plugin / 'src').rglob('*') if p.is_file())
 files.extend(p for p in (plugin / 'vendor').rglob('*') if p.is_file())
 with ZipFile(archive, mode='w', compression=ZIP_DEFLATED, compresslevel=9) as z:
+    update_files = []
     for file in sorted(files):
         relative = file.relative_to(root).as_posix()
         info = ZipInfo(f'Playback/{relative}', date_time=(2026, 10, 16, 0, 0, 0))
         info.create_system = 3
         info.external_attr = ((0o755 if relative in ('start-player.sh', 'ops/package-release.py', 'ops/bundle-yt-dlp.py') else 0o644) << 16)
         info.compress_type = ZIP_DEFLATED
-        z.writestr(info, file.read_bytes(), compress_type=ZIP_DEFLATED, compresslevel=9)
+        contents = file.read_bytes()
+        z.writestr(info, contents, compress_type=ZIP_DEFLATED, compresslevel=9)
+        update_files.append({'path': relative, 'sha256': sha256(contents).hexdigest()})
+    info = ZipInfo('Playback/UPDATE-MANIFEST.json', date_time=(2026, 10, 16, 0, 0, 0))
+    info.create_system = 3
+    info.external_attr = 0o644 << 16
+    z.writestr(info, json.dumps({'version': version, 'files': update_files}) + '\n',
+               compress_type=ZIP_DEFLATED, compresslevel=9)
 checksum = sha256(archive.read_bytes()).hexdigest()
 (out / f'{archive.name}.sha256').write_text(f'{checksum}  {archive.name}\n', encoding='utf-8')
 print(f'{archive} ({archive.stat().st_size} bytes)')

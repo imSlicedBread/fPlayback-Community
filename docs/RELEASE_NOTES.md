@@ -1,3 +1,19 @@
+# fKey Playback v1.7.17 — Windows updater
+
+Stations that start with Windows can now update in place. The updater finds the installation from the boot task, verifies and copies the release files, and restarts Playback if it was running. It preserves playlists, settings, sign-in tokens, launcher settings, and Windows startup options. If copying fails, it attempts to restore the previous app files.
+
+1. Download **Playback-v1.7.17.zip** and extract it to a separate local folder.
+2. In the extracted **Playback** folder, double-click **UPDATE-PLAYBACK.bat** and approve the Windows administrator prompt.
+3. When the updater finishes, refresh your existing dashboard.
+
+For a manually started station, press **Ctrl+C** in its console, extract the update over the existing installation, then run **start-player.bat** again.
+
+The release also includes plugin **0.1.13** installers for **OBS 33.0.1 or 33.0.0** and **OBS 32.2.2**, along with their SHA-256 checksums.
+
+The packaged updater was tested with a real local Playback server and simulated Windows startup task operations. The test suite also covers a damaged release, restoration after a copy error, and keeping a disabled task disabled.
+
+---
+
 # fKey Playback v1.7.16 — OBS 33.0.1 installer
 
 The Windows x64 **OBS 33** installer **0.1.13** now accepts **OBS 33.0.1** and **33.0.0**. It checks for Qt 6.11.1 and CEF 150.0.20 before copying files. OBS 32.2.2 uses its own installer.

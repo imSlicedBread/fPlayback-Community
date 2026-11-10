@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.17 — Windows updater
+
+- Add **UPDATE-PLAYBACK.bat** for stations that start with Windows. It finds the installation from the boot task, applies verified files, and restarts the station if it was running.
+- Keep station data, customized launchers, and startup settings. Restore the previous app files if a copy fails.
+
 ## v1.7.16 — OBS 33.0.1 installer
 
 - Release installer 0.1.13 with support for OBS 33.0.0 and 33.0.1. The installer still checks Qt 6.11.1 and CEF 150.0.20.

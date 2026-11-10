@@ -1,4 +1,4 @@
-# fKey Playback 1.7.16
+# fKey Playback 1.7.17
 
 Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS Browser Source and a separate operator dashboard.
 
@@ -6,7 +6,11 @@ Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS 
 
 Supporting documentation: [release notes](docs/RELEASE_NOTES.md), [storage verification](docs/BUILD-REPORT.md), and [historical performance measurements](docs/PERFORMANCE.md).
 
-## New in v1.7.16 — OBS 33.0.1 installer
+## New in v1.7.17 — Windows updater
+
+If Playback starts with Windows, extract the new ZIP to a separate folder and run **UPDATE-PLAYBACK.bat**. The updater finds the existing installation, applies the update, and restarts Playback if it was running. See [Update a station that starts with Windows](#update-a-station-that-starts-with-windows).
+
+## Included from v1.7.16 — OBS 33.0.1 installer
 
 The Windows x64 OBS 33 installer **0.1.13** supports **OBS 33.0.0 and 33.0.1**. It checks for Qt 6.11.1 and CEF 150.0.20 before installing. Close OBS and choose **fKey-Playback-OBS-Plugin-Setup-0.1.13-OBS33.exe**. OBS 32.2.2 uses the installer without the **-OBS33** suffix. See the [OBS plugin setup guide](obs-plugin/README.md).
 
@@ -224,6 +228,16 @@ Admin commands require Twitch's numeric sender identity tag and must originate i
 Windows must sign in to a desktop before the browser or OBS can run; the boot server alone does not render video. Windows automatic sign-in, if desired, is a separate workstation configuration. Playback's OBS launcher opens OBS with its saved scene; it does not start streaming or recording.
 
 For a custom OBS install, run `powershell -NoProfile -ExecutionPolicy Bypass -File .\ops\register-autostart.ps1 -StartNow -StartOBSAtLogon -ObsPath "D:\OBS\bin\64bit\obs64.exe"` from the Playback folder.
+
+### Update a station that starts with Windows
+
+1. Download the latest release ZIP and extract it to a separate local folder.
+2. Double-click **UPDATE-PLAYBACK.bat** in the extracted Playback folder and approve the Windows administrator prompt.
+3. When the updater finishes, refresh the existing dashboard.
+
+The updater finds your installation from the boot task and updates it in place. It restarts Playback if it was running. The queue, settings, sign-in tokens, launcher settings, and Windows startup options stay in the existing installation.
+
+For a manually started station, press **Ctrl+C** in its console, extract the update over the existing installation, then run **start-player.bat** again.
 
 ## Data and backups
 
