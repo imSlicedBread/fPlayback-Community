@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.19 — Control shutdown and station packaging
+
+- Add an authenticated **Shut down Playback** button on Control, with confirmation, a saved queue and a successful process exit.
+- Show restart instructions after shutdown and stop dashboard polling.
+- Ship native OBS development files in the separate plugin packages. The station ZIP includes the plugin guide, license and JavaScript controller.
+
 ## v1.7.18 — Windows updater compatibility
 
 - Read the Windows Task Scheduler action's `Arguments` property so the updater recognizes existing AUTO-START tasks.

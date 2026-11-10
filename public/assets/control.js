@@ -3,10 +3,11 @@ import {singleFlight} from './single-flight.js?v=1.5.1';
 import {moveInBatches, BULK_MOVE_BATCH_SIZE} from './bulk-move.js?v=1.5.1';
 import {$,e,api,thumbnail,formatTime,showNotice,applyTheme,initAuth} from './common.js?v=1.5.1';
 let state=null,busy=false,scrubbing=false,scrubVideoId=null;
+let pollTimer=null,shuttingDown=false;
 let recycledSortSaved=null;
 let audioDesired=null,audioPreview=null,audioSending=false,audioTimer=null,audioEditing=false,lastAudibleVolume=50,lastAudioSend=0;
 async function action(action,props={}){
-  if(busy)return false;busy=true;
+  if(busy||shuttingDown)return false;busy=true;
   try{await api('control',{method:'POST',data:{action,...props}});showNotice('controlMessage','Saved','success');await refresh();return true;}
   catch(err){showNotice('controlMessage',err.message,'error');if(err.status===401)$('auth').classList.remove('hidden');return false;}
   finally{busy=false;}
@@ -339,9 +340,12 @@ function drawSuggestions(s){
   if(!s.suggestions.length)container.append(e('div',{class:'small-note',text:'No pending suggestions.'}));
 }
 async function refreshOnce(){
+  if(shuttingDown)return;
   if(bulkMoveRunning)return; // Preserve the selection and progress during long moves.
   try{
     const snapshot=await api(`operator?compact=1${catalogRevision?'&catalog='+encodeURIComponent(catalogRevision):''}`,{signal:AbortSignal.timeout(10000)});
+    if(shuttingDown)return;
+    $('shutdown').disabled=false;
     if(snapshot.catalog){catalog=snapshot.catalog;catalogRevision=snapshot.catalogRevision;}
     // Compatibility with the last full-response API, useful during mixed-version upgrades.
     if(!catalog||!snapshot.catalogRevision){catalog=snapshot;catalogRevision=null;}
@@ -357,6 +361,7 @@ async function refreshOnce(){
     $('twitchStatus').textContent=s.twitch.state;
     $('migration').textContent=s.migrationNotice||'';
   }catch(err){
+    if(shuttingDown)return;
     if(err.status===401)$('auth').classList.remove('hidden');
     $('workerDot').className='dot bad';$('workerStatus').textContent='Connection lost — retrying';
   }
@@ -527,10 +532,28 @@ $('playlistImportButton').addEventListener('click',async()=>{
   }catch(err){showNotice('playlistStatus',err.message,'error');if(err.status===401)$('auth').classList.remove('hidden');}
   finally{setPlaylistBusy(false);previewSelection();}
 });
+$('shutdown').addEventListener('click',async()=>{
+  if(shuttingDown||!window.confirm('Shut down Playback? Playback will stop until you start the station again.'))return;
+  shuttingDown=true;
+  $('shutdown').disabled=true;
+  clearTimeout(pollTimer);
+  try{
+    await api('shutdown',{method:'POST',data:{confirm:true},signal:AbortSignal.timeout(10000)});
+    clearTimeout(audioTimer);
+    document.querySelector('main').inert=true;
+    $('shutdownNotice').classList.remove('hidden');
+  }catch(err){
+    shuttingDown=false;
+    $('shutdown').disabled=false;
+    showNotice('controlMessage',err.message,'error');
+    if(err.status===401)$('auth').classList.remove('hidden');
+    schedulePoll();
+  }
+});
 await initAuth(refresh);
-let pollTimer=null;
 function schedulePoll(){
   clearTimeout(pollTimer);
+  if(shuttingDown)return;
   pollTimer=setTimeout(async()=>{
     if(!document.hidden&&$('auth').classList.contains('hidden'))await refresh();
     schedulePoll();

@@ -1,4 +1,4 @@
-# fKey Playback 1.7.18
+# fKey Playback 1.7.19
 
 Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS Browser Source and a separate operator dashboard.
 
@@ -6,7 +6,13 @@ Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS 
 
 Supporting documentation: [release notes](docs/RELEASE_NOTES.md), [storage verification](docs/BUILD-REPORT.md), and [historical performance measurements](docs/PERFORMANCE.md).
 
-## New in v1.7.18 — Windows updater compatibility
+## New in v1.7.19 — Control shutdown and station packaging
+
+Use **Shut down Playback** at the top of Control to stop the station. Confirm the prompt, then wait for the stopped message. Start it again with **start-player.bat** or the **fKey Playback - Boot Server** task in Windows Task Scheduler.
+
+The station ZIP includes the OBS plugin guide and controller. The separate OBS plugin ZIPs contain their installers, native build sources, tests and licenses.
+
+## Included from v1.7.18 — Windows updater compatibility
 
 The updater now reads the command arguments from the existing Windows Task Scheduler action so it can find installations configured with **AUTO-START**.
 

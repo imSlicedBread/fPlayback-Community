@@ -25,7 +25,7 @@ test('Dashboard offers all rotation lanes and importer destinations with action 
   assert.match(script,/destination:\$\('playlistDestination'\)\.value/);
   assert.match(script,/order:\$\('playlistOrder'\)\.value/);
   assert.match(html,/style\.css\?v=1\.5\.1/);
-  assert.match(html,/control\.js\?v=1\.7\.12/);
+  assert.match(html,/control\.js\?v=1\.7\.19/);
 });
 
 test('Bundled executable is used from local tools before relying on PATH',()=>{

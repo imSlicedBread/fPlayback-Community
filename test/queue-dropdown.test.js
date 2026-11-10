@@ -25,8 +25,8 @@ test('Destination dropdown is never reset by an ordinary polling update',()=>{
   assert.match(body,/to:view\.index\+1/);
 });
 
-test('Dashboard loads cache-busted v1.7.12 JavaScript',()=>{
+test('Dashboard loads cache-busted v1.7.19 JavaScript',()=>{
   const html=readFileSync(path.join(root,'public/control.html'),'utf8');
-  assert.match(html,/control\.js\?v=1\.7\.12/);
+  assert.match(html,/control\.js\?v=1\.7\.19/);
   assert.match(html,/style\.css\?v=1\.5\.1/);
 });

@@ -1,3 +1,15 @@
+# fKey Playback v1.7.19 — Control shutdown and station packaging
+
+Control now includes **Shut down Playback**. An authenticated operator confirms the prompt to stop the station, save its queue and close its connections. Playback exits successfully so the Windows boot task completes. The stopped screen explains how to start the station again.
+
+The station ZIP now includes the OBS plugin guide, license and JavaScript controller. Native plugin sources and tests are available in the separate plugin ZIPs.
+
+To update a station with AUTO-START enabled, extract **Playback-v1.7.19.zip** to a separate folder and run **UPDATE-PLAYBACK.bat** from that copy. The updater recognizes the existing Windows boot task and restarts Playback if it was running.
+
+The release includes the matching OBS 0.1.13 installers and plugin ZIPs, with SHA-256 checksums.
+
+---
+
 # fKey Playback v1.7.18 — Windows updater compatibility
 
 **UPDATE-PLAYBACK.bat** now recognizes the boot task created by **INSTALL-AUTO-START.bat**. The previous updater could reject a valid task before copying any files.

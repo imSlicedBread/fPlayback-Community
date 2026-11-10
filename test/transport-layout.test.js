@@ -20,5 +20,5 @@ test('Playback actions are centered across the whole Now Playing panel between s
 });
 test('Dashboard uses versioned CSS and JavaScript to bypass old cached layout',()=>{
   assert.match(html,/\/assets\/style\.css\?v=1\.5\.1/);
-  assert.match(html,/\/assets\/control\.js\?v=1\.7\.12/);
+  assert.match(html,/\/assets\/control\.js\?v=1\.7\.19/);
 });
