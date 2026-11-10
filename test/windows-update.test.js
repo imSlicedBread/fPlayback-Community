@@ -52,7 +52,7 @@ test('Windows updater keeps the station and startup configuration through update
 . ${quote(updater)}
 $installed = ${quote(installed)}
 $release = ${quote(release)}
-$entry = Join-Path $installed 'ops\boot-service.mjs'
+$entry = "$installed\ops\.\boot-service.mjs"
 $task = [pscustomobject]@{
     Actions = @([pscustomobject]@{
         Execute = 'C:\Program Files\nodejs\node.exe'
@@ -98,7 +98,9 @@ Assert-Text (Join-Path $installed 'server.js') 'old server.js'
 function Copy-Item {
     param($LiteralPath, $Destination, [switch]$Force)
     Microsoft.PowerShell.Management\Copy-Item @PSBoundParameters
-    if ($LiteralPath -eq (Join-Path $release 'public/new.html')) { throw 'Simulated interrupted copy' }
+    if ([IO.Path]::GetFullPath($LiteralPath) -eq [IO.Path]::GetFullPath((Join-Path $release 'public/new.html'))) {
+        throw 'Simulated interrupted copy'
+    }
 }
 try { Update-Playback $release; throw 'Copy failure was ignored' }
 catch { if ($_.Exception.Message -ne 'Simulated interrupted copy') { throw } }

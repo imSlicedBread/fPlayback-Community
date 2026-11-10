@@ -55,9 +55,11 @@ function Update-Playback([string] $Source) {
     $target = [IO.Path]::GetFullPath($actions[0].WorkingDirectory).TrimEnd('\')
     $source = [IO.Path]::GetFullPath($Source).TrimEnd('\')
     if ($target -notmatch '^[A-Za-z]:\\.' -or $port -lt 1 -or $port -gt 65535 -or
-        $entry -ne (Join-Path $target 'ops\boot-service.mjs')) {
+        $entry -notmatch '^[A-Za-z]:[\\/]' -or
+        [IO.Path]::GetFullPath($entry) -ne (Join-Path $target 'ops\boot-service.mjs')) {
         throw 'The Playback boot task points to an unrecognized installation.'
     }
+    $entry = Join-Path $target 'ops\boot-service.mjs'
     if ($source -eq $target -or $source.StartsWith("$target\", [StringComparison]::OrdinalIgnoreCase) -or
         $target.StartsWith("$source\", [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Extract the new Playback ZIP to a separate folder, then run UPDATE-PLAYBACK.bat from that copy.'
