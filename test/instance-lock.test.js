@@ -77,3 +77,48 @@ for(const interactive of [false,true])test(`duplicate ${interactive?'interactive
   assert.equal(fs.readFileSync(file,'utf8'),lock);
   assert.equal((await fetch(`http://127.0.0.1:${port}/api/health`)).ok,true);
 });
+
+test('simultaneous starters recover a crashed owner exactly once', {timeout:15_000}, async t=>{
+  const {dir,file}=fixture(t);
+  const exited=spawn(process.execPath,['-e',''],{windowsHide:true});
+  await once(exited,'close');
+  fs.writeFileSync(file,String(exited.pid));
+  const moduleUrl=new URL('../lib/store.js',import.meta.url).href;
+  const source=`
+    import {processLock,privateSecret} from ${JSON.stringify(moduleUrl)};
+    import {createHash} from 'node:crypto';
+    let release;
+    process.on('message',message=>{
+      if(message==='initialize'){
+        const key=privateSecret(process.argv[1],'test-key',24);
+        process.send(createHash('sha256').update(key).digest('hex'));
+      } else if(message==='start'){
+        try {release=processLock(process.argv[1]);process.send('owner');}
+        catch(error){process.send(error.code);}
+      } else {release?.();process.disconnect();}
+    });
+    process.send('ready');
+  `;
+  const children=[];
+  try {
+    const ready=[];
+    for(let i=0;i<4;i++){
+      const child=spawn(process.execPath,['--input-type=module','-e',source,dir],{
+        windowsHide:true,stdio:['ignore','ignore','inherit','ipc']
+      });
+      children.push(child);ready.push(once(child,'message'));
+    }
+    await Promise.all(ready);
+    const fingerprints=await Promise.all(children.map(child=>{
+      const response=once(child,'message');child.send('initialize');return response;
+    }));
+    assert.equal(new Set(fingerprints.map(([value])=>value)).size,1);
+    const outcomes=await Promise.all(children.map(child=>{
+      const outcome=once(child,'message');child.send('start');return outcome;
+    }));
+    assert.deepEqual(outcomes.map(([result])=>result).sort(),['PLAYBACK_INSTANCE_LOCKED','PLAYBACK_INSTANCE_LOCKED','PLAYBACK_INSTANCE_LOCKED','owner']);
+    const winner=children[outcomes.findIndex(([result])=>result==='owner')];
+    assert.equal(fs.readFileSync(file,'utf8'),String(winner.pid));
+    await Promise.all(children.map(child=>{const closed=once(child,'close');child.send('stop');return closed;}));
+  } finally {for(const child of children)if(child.exitCode===null)child.kill();}
+});

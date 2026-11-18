@@ -185,7 +185,8 @@ test('Real HTTP backend accepts more than 2,000 videos and preserves controls, p
   const delta=await(await fetch(`${base}/operator?compact=1&catalog=${encodeURIComponent(first.catalogRevision)}`,{headers:{Cookie:cookie}})).text();
   assert.ok(Buffer.byteLength(delta)<8000);assert.equal(JSON.parse(delta).catalog,undefined);
   const health=await(await fetch(`${base}/health`)).json();assert.equal(health.storage,'sqlite');assert.equal(health.queueLimit,null);
-  await app.close();base=await make();cookie=await login();
+  await app.close();base=await make();
+  assert.deepEqual(await (await fetch(`${base}/session`,{headers:{Cookie:cookie}})).json(),{authenticated:true});
   assert.equal(app.engine.storedCount(),3001);assert.equal(app.engine.state.current.position,321);
   assert.deepEqual(app.engine.state.audio,{volume:34,muted:true});
 });
