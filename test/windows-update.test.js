@@ -107,6 +107,19 @@ catch { if ($_.Exception.Message -notmatch 'overlaps') { throw } }
 Remove-Item Env:\DATA_DIR
 Assert-Events ''
 
+$alias = Join-Path (Split-Path -Parent $installed) 'Playback data alias'
+New-Item -ItemType Junction -Path $alias -Target $installed | Out-Null
+try {
+    $env:DATA_DIR = Join-Path $alias 'public\new.html'
+    try { Update-Playback $release; throw 'Aliased data directory overwritten' }
+    catch { if ($_.Exception.Message -notmatch 'overlaps') { throw } }
+    Assert-Events ''
+    if (Test-Path -LiteralPath $env:DATA_DIR) { throw 'Update created a file at a protected data path' }
+} finally {
+    Remove-Item Env:\DATA_DIR
+    [IO.Directory]::Delete($alias)
+}
+
 $installedManifest = Join-Path $installed 'UPDATE-MANIFEST.json'
 $privateFile = Join-Path $installed 'data/playlist.sqlite3'
 New-Item -ItemType HardLink -Path $installedManifest -Target $privateFile | Out-Null

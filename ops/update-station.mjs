@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {compareStationVersions, getLatestStationRelease} from '../lib/station-release.js';
 import {stageLatestRelease} from '../lib/station-updates.js';
-import {applyStationRelease} from '../lib/station-install.js';
+import {applyStationRelease, canonicalDataPath} from '../lib/station-install.js';
 import {isPackagedStation, openInstallLock} from '../lib/station-install-lock.js';
 import {processLock} from '../lib/store.js';
 import {VERSION} from '../lib/version.js';
@@ -13,6 +13,12 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
 let temporary, lock, releaseData;
 async function update() {
+  if (args[0] === '--canonical-paths' && args.length > 1 && args.slice(1).every(value => path.isAbsolute(value))) {
+    const paths = await Promise.all(args.slice(1).map(canonicalDataPath));
+    // PowerShell 5.1 reads native stdout using the active console code page.
+    console.log(Buffer.from(JSON.stringify(paths), 'utf8').toString('base64'));
+    return;
+  }
   // The Windows updater already stopped the registered boot task. Keep the
   // same installation lock as the dashboard until PowerShell finishes copying.
   if (args.length === 2 && args[0] === '--lock-install' && path.isAbsolute(args[1])) {

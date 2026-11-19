@@ -57,7 +57,7 @@ function Assert-PlaybackDestination([string] $Path, [string[]] $DataRoots) {
     }
 }
 
-function Install-LatestPlayback([string] $Target, [string] $Node) {
+function Assert-PlaybackUpdateHelper([string] $Target) {
     $cli = Join-Path $Target 'ops\update-station.mjs'
     Assert-PlaybackUpdatePath $cli
     Assert-PlaybackUpdatePath (Join-Path $Target 'UPDATE-MANIFEST.json')
@@ -68,7 +68,11 @@ function Install-LatestPlayback([string] $Target, [string] $Node) {
         (Get-PlaybackFileHash $cli) -ne $cliEntry[0].sha256) {
         throw 'The installed update files do not match this release. Use UPDATE-PLAYBACK.bat from a newly extracted official ZIP.'
     }
+}
 
+function Install-LatestPlayback([string] $Target, [string] $Node) {
+    Assert-PlaybackUpdateHelper $Target
+    $cli = Join-Path $Target 'ops\update-station.mjs'
     $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
     $stage = Join-Path $tempRoot ('fkey-playback-stage-' + [guid]::NewGuid().ToString('N'))
     Assert-PlaybackUpdatePath $stage
@@ -153,7 +157,6 @@ function Update-Playback([string] $Source, [string] $ExpectedTarget) {
         throw 'The Playback boot task points to an unrecognized installation.'
     }
     $entry = Join-Path $target 'ops\boot-service.mjs'
-    if ($ExpectedTarget -and $target -ne $ExpectedTarget) { throw 'The registered Playback installation changed during the download.' }
     if ((Test-Path -LiteralPath (Join-Path $source '.git')) -or (Test-Path -LiteralPath (Join-Path $target '.git'))) {
         throw 'Update a source checkout using Git. Release updates require an extracted installation.'
     }
@@ -161,18 +164,30 @@ function Update-Playback([string] $Source, [string] $ExpectedTarget) {
     Assert-PlaybackUpdatePath (Join-Path $source 'package.json')
     Assert-PlaybackUpdatePath (Join-Path $source 'UPDATE-MANIFEST.json')
     Assert-PlaybackUpdatePath (Join-Path $target 'package.json')
-    $dataRoots = @(Get-PlaybackDataRoots $target)
-    Assert-PlaybackDestination (Join-Path $target 'UPDATE-MANIFEST.json') $dataRoots
     Assert-PlaybackUpdatePath $entry
+    $dataRoots = @(Get-PlaybackDataRoots $target)
+    # A task or DATA_DIR can use a short name or an aliased parent. Resolve
+    # roots once, including the existing ancestor of a future data directory.
+    $roots = @($target, $source) + $dataRoots
+    $cli = Join-Path $PSScriptRoot 'update-station.mjs'
+    $encoded = & $actions[0].Execute $cli --canonical-paths @roots
+    if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the Playback installation and station data paths.' }
+    $canonical = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encoded)) | ConvertFrom-Json
+    if ($canonical.Count -ne $roots.Count) { throw 'Incomplete Playback installation and station data paths.' }
+    $target = $canonical[0]
+    $canonicalSource = $canonical[1]
+    $dataRoots += $canonical[2..($canonical.Count - 1)]
+    if ($ExpectedTarget -and $target -ne $ExpectedTarget) { throw 'The registered Playback installation changed during the download.' }
+    Assert-PlaybackDestination (Join-Path $target 'UPDATE-MANIFEST.json') $dataRoots
     if (-not (Test-Path -LiteralPath $entry -PathType Leaf)) {
         throw "The boot task's Playback files are missing from $target."
     }
-    if ($source -eq $target) {
+    if ($canonicalSource -eq $target) {
         Install-LatestPlayback $target $actions[0].Execute
         return
     }
-    if ($source.StartsWith("$target\", [StringComparison]::OrdinalIgnoreCase) -or
-        $target.StartsWith("$source\", [StringComparison]::OrdinalIgnoreCase)) {
+    if ($canonicalSource.StartsWith("$target\", [StringComparison]::OrdinalIgnoreCase) -or
+        $target.StartsWith("$canonicalSource\", [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Extract the Playback ZIP to a separate folder outside the existing installation.'
     }
     $newVersion = Get-PlaybackPackageVersion $source
@@ -333,7 +348,11 @@ if ($MyInvocation.InvocationName -ne '.') {
             try { $acquired = $mutex.WaitOne(0) }
             catch [Threading.AbandonedMutexException] { $acquired = $true }
             if (-not $acquired) { throw 'A Playback update is already running.' }
-            try { Update-Playback (Join-Path $PSScriptRoot '..') }
+            try {
+                $packageRoot = Join-Path $PSScriptRoot '..'
+                Assert-PlaybackUpdateHelper $packageRoot
+                Update-Playback $packageRoot
+            }
             finally { $mutex.ReleaseMutex() }
         } finally {
             $mutex.Dispose()

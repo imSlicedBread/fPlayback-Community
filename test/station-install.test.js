@@ -94,6 +94,19 @@ test('reject protected manifest paths', async t => {
   }
 });
 
+test('protect a future data directory reached through an existing path alias', async t => {
+  const {root, source, installed} = await fixture(t);
+  const alias = path.join(root, 'station alias');
+  try { await fs.symlink(installed, alias, 'junction'); }
+  catch (error) {
+    if (error.code === 'EPERM') return t.skip('Directory links are disabled on this filesystem');
+    throw error;
+  }
+  await assert.rejects(applyStationRelease(source, installed, version, {dataDir: path.join(alias, 'lib')}), /overlaps/);
+  assert.equal(await fs.readFile(path.join(installed, 'package.json'), 'utf8'), pkg('2.2.9'));
+  await assert.rejects(fs.access(path.join(installed, 'lib')), {code: 'ENOENT'});
+});
+
 test('reject links in the destination or source', async t => {
   const {root, source, installed} = await fixture(t);
   const outside = path.join(root, 'outside');
