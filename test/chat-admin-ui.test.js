@@ -37,7 +37,7 @@ async function settingsHarness(){
     return {settings:structuredClone(saved),twitch:{state:'DISABLED',mode:'disabled'},outputs:[],layoutRevision:1,chatAdminActivity:activity};
   };
   const script=fs.readFileSync(new URL('../public/assets/settings.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'');
-  const context={$,e,api,document:{querySelectorAll:()=>[]},window:{},applyTheme(){},applyLowerThird(){},renderVoteScreen(){},
+  const context={$,e,api,document:{querySelectorAll:()=>[]},window:{},applyTheme(){},applyLowerThird(){},renderVoteScreen(){},setupStationUpdates:()=>()=>{},
     showNotice:(id,message)=>{$(id).textContent=message;},initAuth:async load=>load(),setInterval(){}};
   const controller=await vm.runInNewContext(`(async()=>{${script}\nreturn {updateStatus};})()`,context);
   return {$,controller,html,get saved(){return saved;},get posts(){return posts;},get reconnects(){return reconnects;},set activity(value){activity=value;},set failSave(value){failSave=value;}};
@@ -70,7 +70,7 @@ test('Settings failed saves preserve draft and saved access; activity uses text 
   assert.equal(result.textContent,'Error — <img src=x onerror=alert(1)>');assert.deepEqual(result.children,[]);
   h.activity=[];await h.controller.updateStatus();
   assert.match(h.$('chatAdminActivity').children[0].children[0].textContent,/No chat admin commands/);
-  assert.match(h.html,/settings\.js\?v=1\.5\.1/);
+  assert.match(h.html,/settings\.js\?v=\d+\.\d+\.\d+/);
 });
 
 test('Kick and SOOP Settings save independent whitelists and keep edits intact while showing platform activity',async()=>{

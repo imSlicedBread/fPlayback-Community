@@ -48,6 +48,18 @@ test('Long-running title lookup churn retains bounded history without losing sav
  }
  assert.equal(videos.get(ids[0]).title,`Discovered ${ids[0]}`);
  assert.equal(videos.get(ids.at(-1)).title,`Discovered ${ids.at(-1)}`);
- assert.equal(q.cache.size,5000);assert.equal(q.seen.size,5000);assert.equal(q.inflight.size,0);
- q.close();assert.equal(q.cache.size,0);assert.equal(q.seen.size,0);
+ assert.equal(q.cache.size,5000);assert.equal(q.retryAt.size,0);assert.equal(q.inflight.size,0);
+ q.close();assert.equal(q.cache.size,0);assert.equal(q.retryAt.size,0);
+});
+
+test('transient lookup failure retries on a later enqueue after cooldown',async()=>{
+ let now=0,calls=0;
+ const video={videoId:id,title:''};
+ const engine={state:{current:video,queue:[],suggestions:[]},applyDiscoveredTitle(_,title){video.title=title;}};
+ const q=new TitleMetadataQueue(engine,{clock:()=>now,resolver:async()=>++calls===1?null:'Recovered'});
+ const settle=()=>new Promise(resolve=>setImmediate(resolve));
+ q.enqueue([id]);await settle();
+ now+=59_999;q.enqueue([id]);await settle();assert.equal(calls,1);
+ now++;q.enqueue([id,id]);await settle();
+ assert.equal(calls,2);assert.equal(video.title,'Recovered');q.close();
 });

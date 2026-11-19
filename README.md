@@ -1,4 +1,4 @@
-# fKey Playback 1.7.19
+# fKey Playback 1.8.0
 
 Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS Browser Source and a separate operator dashboard.
 
@@ -6,7 +6,13 @@ Made by **fKey Labs Inc.** A persistent, local 24/7 YouTube station with an OBS 
 
 Supporting documentation: [release notes](docs/RELEASE_NOTES.md), [storage verification](docs/BUILD-REPORT.md), and [historical performance measurements](docs/PERFORMANCE.md).
 
-## New in v1.7.19 — Control shutdown and station packaging
+## New in v1.8.0 — Station updates
+
+Open **Settings → Updates** to see the installed version and check for a new stable release. On a manually started station, choose **Install and restart** when you are ready to interrupt playback. Playback downloads and verifies the release while the station keeps playing, then restarts on the same port. The launcher console stays open. On Linux and macOS, the updater requires `unzip`.
+
+Packaged stations check GitHub daily. By default you choose when to install. For unattended updates on a manually started station, enable **Automatically install updates and restart this station**. This also installs an available update immediately and can interrupt a broadcast. For a Windows boot station, run **UPDATE-PLAYBACK.bat** from the installed Playback folder to download and install the release with administrator approval.
+
+## Included from v1.7.19 — Control shutdown and station packaging
 
 Use **Shut down Playback** at the top of Control to stop the station. Confirm the prompt, then wait for the stopped message. Start it again with **start-player.bat** or the **fKey Playback - Boot Server** task in Windows Task Scheduler.
 
@@ -241,13 +247,15 @@ For a custom OBS install, run `powershell -NoProfile -ExecutionPolicy Bypass -Fi
 
 ### Update a station that starts with Windows
 
-1. Download the latest release ZIP and extract it to a separate local folder.
-2. Double-click **UPDATE-PLAYBACK.bat** in the extracted Playback folder and approve the Windows administrator prompt.
+1. Open the installed Playback folder. If updating from v1.7.19 or earlier for the first time, download and extract the new release ZIP into a separate folder and use that copy for this update.
+2. Double-click **UPDATE-PLAYBACK.bat** and approve the Windows administrator prompt.
 3. When the updater finishes, refresh the existing dashboard.
 
 The updater finds your installation from the boot task and updates it in place. It restarts Playback if it was running. The queue, settings, sign-in tokens, launcher settings, and Windows startup options stay in the existing installation.
 
-For a manually started station, press **Ctrl+C** in its console, extract the update over the existing installation, then run **start-player.bat** again.
+For a manually started v1.8.0 or newer station, use **Settings → Updates → Install and restart**. You can also stop the station and run `node ops/update-station.mjs` from its installed folder, then restart it normally. Use the same `DATA_DIR` environment setting as your launcher. The updater checks the official station ZIP against its published SHA-256 checksum and verifies the packaged files before replacing them. Install native OBS plugin releases separately using the matching OBS installer.
+
+For the first upgrade of a manually started v1.7.19 or older station, stop Playback and back up its data. Extract this release to a separate folder, then copy the release files into the existing installation, keeping your customized `start-player.bat` or `start-player.sh`, local configuration and data folder. Start Playback as usual and open **Settings → Updates** for future upgrades.
 
 ## Data and backups
 

@@ -1,6 +1,6 @@
 {
   "name": "fkeylabs-playback",
-  "version": "1.7.19",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
   "description": "fKey Playback made by fKey Labs Inc.: persistent local OBS / YouTube broadcast station",
@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test test/*.test.js",
-    "check": "node --check server.js && node --check lib/engine.js && node --check lib/http.js && node --check lib/overlay-presentation.js && node --check lib/twitch.js && node --check public/assets/control.js && node --check public/assets/settings.js && node --check public/assets/player.js && node --check public/assets/vote.js && node --check public/assets/common.js && node --check public/assets/vote-screen.js && node --check public/assets/youtube-audio.js && node --check lib/title-metadata.js && node --check lib/open-dashboard.js && node --check lib/playlist-import.js && node --check ops/boot-service.mjs && node --check public/assets/queue-page.js && node --check public/assets/single-flight.js && node --check public/assets/bulk-move.js && node --check lib/sqlite-store.js && node --check ops/backup-storage.mjs && node --check ops/profile-storage.mjs && node --check lib/chat-admin.js && node --check lib/chat-socket.js && node --check lib/kick.js && node --check lib/soop.js && node --check lib/soop-auth.js && node --check ops/connect-soop.mjs && node --check public/assets/youtube-setup.js && node --check public/assets/overlay.js && node --check obs-plugin/watch-controller.js && node --check public/assets/sidebar.js",
+    "check": "node --check server.js && node --check lib/engine.js && node --check lib/http.js && node --check lib/overlay-presentation.js && node --check lib/twitch.js && node --check public/assets/control.js && node --check public/assets/settings.js && node --check public/assets/player.js && node --check public/assets/vote.js && node --check public/assets/common.js && node --check public/assets/vote-screen.js && node --check public/assets/youtube-audio.js && node --check lib/title-metadata.js && node --check lib/open-dashboard.js && node --check lib/playlist-import.js && node --check ops/boot-service.mjs && node --check public/assets/queue-page.js && node --check public/assets/single-flight.js && node --check public/assets/bulk-move.js && node --check lib/sqlite-store.js && node --check ops/backup-storage.mjs && node --check ops/profile-storage.mjs && node --check lib/chat-admin.js && node --check lib/chat-socket.js && node --check lib/kick.js && node --check lib/soop.js && node --check lib/soop-auth.js && node --check ops/connect-soop.mjs && node --check public/assets/youtube-setup.js && node --check public/assets/overlay.js && node --check obs-plugin/watch-controller.js && node --check public/assets/sidebar.js && npm run check:updates",
+    "check:updates": "node --check lib/station-updates.js && node --check lib/station-release.js && node --check lib/station-install.js && node --check lib/station-install-lock.js && node --check lib/station-restart.js && node --check ops/update-station.mjs && node --check public/assets/station-update.js",
     "backup": "node ops/backup-storage.mjs",
     "benchmark:storage": "node ops/profile-storage.mjs",
     "connect:soop": "node ops/connect-soop.mjs"

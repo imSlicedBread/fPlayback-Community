@@ -5,6 +5,6 @@ if not exist "%~dp0ops\update-playback.ps1" (
     pause
     exit /b 1
 )
-echo Updating the existing Playback installation. Its video output may pause briefly.
+echo Updating Playback. A running station will restart if the update is installed.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0ops\update-playback.ps1" -KeepWindowOpen
 exit /b %ERRORLEVEL%

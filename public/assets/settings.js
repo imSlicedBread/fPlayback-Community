@@ -1,5 +1,7 @@
 import {$,e,api,applyTheme,applyLowerThird,showNotice,initAuth} from './common.js?v=1.5.1';
 import {renderVoteScreen} from './vote-screen.js';
+import {setupStationUpdates} from './station-update.js';
+const refreshUpdates=setupStationUpdates();
 const boolKeys=['loop','voteOnEnd','showLowerThird','scrollTitles','hideCaptions','skipVoting','allowSuggestions','youtubeAccountPlayback'];
 const defaultColors={background:'#0D1010',panel:'#111318',raised:'#171A1F',accent:'#00AFFF',text:'#FFFFFF',healthy:'#22C55E',warning:'#F59E0B',error:'#EF4444',info:'#3B82F6',community:'#8B5CF6'};
 const presetColors={cyan:defaultColors,purple:{...defaultColors,accent:'#8B5CF6'},green:{...defaultColors,accent:'#22C55E'},amber:{...defaultColors,accent:'#F59E0B'}};
@@ -10,6 +12,7 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 function tab(name){
   for(const el of document.querySelectorAll('[data-tab]')){const active=el.dataset.tab===name;el.classList.toggle('active',active);el.setAttribute('aria-selected',active?'true':'false');}
   for(const el of document.querySelectorAll('[data-panel]'))el.classList.toggle('hidden',el.dataset.panel!==name);
+  document.querySelector('.settings-footer').classList.toggle('hidden',name==='updates');
 }
 for(const el of document.querySelectorAll('[data-tab]'))el.addEventListener('click',()=>{tab(el.dataset.tab);if(el.dataset.tab==='lowerthird')requestAnimationFrame(updatePreview);});
 function number(id){return Number($(id).value);}
@@ -217,7 +220,7 @@ async function updateStatus(){
     $('syncState').textContent=`Server layout revision ${s.layoutRevision}. Output acknowledgment confirms loaded settings, not OBS display visibility.`;
   }catch(e){if(e.status===401)$('auth').classList.remove('hidden');}
 }
-async function load(){const state=await api('operator?compact=1&catalog=omit');saved=clone(state.settings);draft=clone(state.settings);populate();await updateStatus();}
+async function load(){const state=await api('operator?compact=1&catalog=omit');saved=clone(state.settings);draft=clone(state.settings);populate();void refreshUpdates();await updateStatus();}
 buildColors();connectFields();setupDrag();
 if('ResizeObserver' in window)new ResizeObserver(()=>{if(draft&&!$('lowerPreview').closest('.hidden'))updatePreview();}).observe($('lowerPreview'));
 await initAuth(load);setInterval(()=>{if($('auth').classList.contains('hidden'))updateStatus();},2500);

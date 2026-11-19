@@ -74,6 +74,14 @@ if (-not (Test-Path -LiteralPath (Join-Path $root 'ops\boot-service.mjs') -PathT
 
 # Only data/ is writable by LOCAL SERVICE; app source files keep their original
 # permissions. Running a user-editable Node app as SYSTEM would be unsafe.
+if (Test-Path -LiteralPath (Join-Path $root 'UPDATE-MANIFEST.json') -PathType Leaf) {
+    # LOCAL SERVICE can take a read lock on this empty SQLite database before
+    # sign-in. An updater needs the exclusive lock to change station files.
+    $guard = Join-Path $root '.playback-install.sqlite3'
+    if (-not (Test-Path -LiteralPath $guard)) {
+        [IO.File]::Open($guard, [IO.FileMode]::CreateNew).Dispose()
+    }
+}
 $dataDir = Join-Path $root 'data'
 if ($StartOBSAtLogon) {
     if ($NoDashboardAtLogon) { throw 'OBS startup requires the interactive sign-in task.' }

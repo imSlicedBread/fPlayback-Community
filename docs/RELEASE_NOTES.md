@@ -1,3 +1,13 @@
+# fKey Playback v1.8.0 — Station updates
+
+Open **Settings → Updates** to see the installed and latest stable versions. For a manually started station, **Install and restart** downloads and verifies the official ZIP, then restarts Playback on the same port. For a Windows boot station, run **UPDATE-PLAYBACK.bat** in the installation folder. Schedule the restart between broadcasts.
+
+To get this feature on an older station, install this release once using the existing ZIP update procedure. The queue, settings, operator credentials and customized launchers stay in place. Native OBS plugins have separate installers.
+
+Manually started stations can opt into unattended installation in **Settings → Updates**. Once enabled, finding a new release triggers an update and restart, including during a broadcast.
+
+---
+
 # fKey Playback v1.7.19 — Control shutdown and station packaging
 
 Control now includes **Shut down Playback**. An authenticated operator confirms the prompt to stop the station, save its queue and close its connections. Playback exits successfully so the Windows boot task completes. The stopped screen explains how to start the station again.

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.0 — Station updates
+
+- Check for new stable Community releases in Settings. Manually started stations can install a verified update and restart on the same port.
+- Enable automatic installation in Settings for unattended station updates and restarts.
+- Run **UPDATE-PLAYBACK.bat** from an installed Windows boot station to fetch and apply the latest release. Updates preserve station data and customized launchers.
+
 ## v1.7.19 — Control shutdown and station packaging
 
 - Add an authenticated **Shut down Playback** button on Control, with confirmation, a saved queue and a successful process exit.
